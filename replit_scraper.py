@@ -1,5 +1,6 @@
+# Contains the ReplitScraper class which downloads all repls from a Replit user's profile.
+
 import time
-import os
 import tkinter as tk
 from tkinter import messagebox
 from selenium import webdriver
@@ -7,11 +8,14 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from urllib.parse import urlparse, urlunparse
+import os
+import shutil
 
 class ReplitScraper:
     def __init__(self, root):
         self.root = root
 
+        self.file_hierarchy = {} # Stores the file hierarchy of the repls.
         self.create_gui()
 
         # Set default values from environment variables
@@ -75,13 +79,16 @@ class ReplitScraper:
         self.login_replit(driver, email, password)
 
         # Start the recursive replit downloading process.
-        downloaded_folders = set()
-        base_url = 'https://replit.com/@'   # base url used for accessing Replit.
-        self.download_replits_recursive(driver, username, f'{base_url}{username}', downloaded_folders)
+        downloaded_folders = set()      # Stores the names of folders that have already been downloaded.
+        self.download_replits_recursive(driver, username, f'https://replit.com/@{username}', downloaded_folders)
+
+        # Scanning is complete. Notify user and clean up resources.
+        messagebox.showinfo('Scan Complete', 'The scan is complete, however, the downloads may still be in progress. Please ensure the downloads are finished before clicking OK.')
         driver.quit()
 
-        # Download is complete. Notify user and clean up resources.
-        messagebox.showinfo('Download Complete', 'Repl.its downloaded successfully.')
+        # Organize files into folders based on file hierarchy.
+        self.organize_files(os.path.join(os.getcwd(), 'output'))
+
 
 
     def login_replit(self, driver, email, password):
@@ -125,8 +132,17 @@ class ReplitScraper:
         return driver
 
 
-    def download_replits_recursive(self, driver, username, folder_link, downloaded_folders):
-        """Recursively downloads repls inside folder and all subfolders."""
+    def download_replits_recursive(self, driver, username, folder_link, downloaded_folders, path=''):
+        """
+        Recursively downloads repls inside folder and all subfolders.
+        
+        Args:
+            driver: Selenium webdriver.
+            username: Replit username.
+            folder_link: Link to the folder currently being processed.
+            downloaded_folders: Set of folders that have already been downloaded.
+            path: Path to the current folder in Replit file hierarchy.
+        """
 
         # Exit if the folder has already been processed (avoid double downloading a folder).
         if folder_link in downloaded_folders:
@@ -140,24 +156,26 @@ class ReplitScraper:
 
         # Switch to the newly opened tab.
         driver.switch_to.window(new_handle)
+        time.sleep(3)   # Wait for the page to load.
 
         # Download repls inside the current folder.
-        self.download_repls_in_folder(driver, username)
+        self.download_repls_in_folder(driver, username, path)
 
         # Extract links to subfolders.
         subfolder_links = [a.get_attribute('href') for a in driver.find_elements(By.XPATH, f'//a[contains(@href, "/@{username}?path=folder")]')]
 
         # Recursively download repls inside subfolders.
         for subfolder_link in subfolder_links:
-            self.download_replits_recursive(driver, username, subfolder_link, downloaded_folders)
+            new_path = path+f'{subfolder_link.split('/')[-1]}/'
+            self.download_replits_recursive(driver, username, subfolder_link, downloaded_folders, new_path)
         
         # Close original tab after all finished with.
         driver.switch_to.window(new_handle)
         driver.close()
-        driver.switch_to.window(driver.window_handles[-1])
+        driver.switch_to.window(driver.window_handles[-1])  # Switch to the last tab, or else the driver will be stuck on the closed tab.
 
 
-    def download_repls_in_folder(self, driver, username):
+    def download_repls_in_folder(self, driver, username, path):
         """Downloads all replits in the folder of the currently opened tab of the driver."""
 
         # Extract links to repls inside the current folder
@@ -166,6 +184,8 @@ class ReplitScraper:
         # Download repls from all links.
         old_handles = driver.window_handles # stored to track when download tabs close.
         for link in repl_links:
+            file_name = link.split("/")[-1]
+            self.file_hierarchy[file_name] = path
             download_url = f'{self.remove_query_params(link)}.zip'
             driver.execute_script(f'window.open("{download_url}", "_blank");')
 
@@ -203,3 +223,17 @@ class ReplitScraper:
                 return new_handles[0]
 
         raise TimeoutError('Timed out waiting for the new tab to open.')
+
+
+    def organize_files(self, output_folder):
+        """Organizes the downloaded files into folders based on the file hierarchy."""
+
+        for file_name, file_location in self.file_hierarchy.items():
+            # Create the destination folder if it doesn't exist
+            destination_folder = os.path.join(output_folder, file_location)
+            os.makedirs(destination_folder, exist_ok=True)
+
+            # Move the file to the destination folder
+            source_file = os.path.join(output_folder, f"{file_name}.zip")
+            destination_file = os.path.join(destination_folder, f"{file_name}.zip")
+            shutil.move(source_file, destination_file)
