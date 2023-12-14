@@ -14,8 +14,8 @@ import shutil
 class ReplitScraper:
     def __init__(self, root):
         self.root = root
-
         self.file_hierarchy = {} # Stores the file hierarchy of the repls.
+
         self.create_gui()
 
         # Set default values from environment variables
@@ -28,6 +28,7 @@ class ReplitScraper:
         default_email = default_email if default_email else ''
         default_password = default_password if default_password else ''
 
+        # Set default values in the GUI entries.
         self.username_entry.insert(0, default_username)
         self.email_entry.insert(0, default_email)
         self.password_entry.insert(0, default_password)
@@ -83,7 +84,9 @@ class ReplitScraper:
         self.download_replits_recursive(driver, username, f'https://replit.com/@{username}', downloaded_folders)
 
         # Scanning is complete. Notify user and clean up resources.
+        self.root.attributes('-topmost', True)  # Bring the messagebox to the front
         messagebox.showinfo('Scan Complete', 'The scan is complete, however, the downloads may still be in progress. Please ensure the downloads are finished before clicking OK.')
+        self.root.attributes('-topmost', False)
         driver.quit()
 
         # Organize files into folders based on file hierarchy.
@@ -107,8 +110,10 @@ class ReplitScraper:
         login_button = driver.find_element(By.CSS_SELECTOR, '[data-cy="log-in-btn"]')
         login_button.click()
 
-        # Delay for login form to complete and submit.
-        time.sleep(2)
+        # Allow user to handle CAPTCHA if it appears.
+        self.root.attributes('-topmost', True)  # Bring the messagebox to the front
+        messagebox.showinfo('Complete CAPTCHA if applicable', 'If a CAPTCHA appeared, please complete it, click Login, and then click OK. If no CAPTCHA appeared, simply click OK.')
+        self.root.attributes('-topmost', False)
 
 
     def setup_webdriver(self):
