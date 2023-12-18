@@ -123,12 +123,13 @@ class ReplitScraper:
         download_directory = os.path.join(os.getcwd(), 'output')
 
         # Setup Selenium WebDriver
-        chrome_driver_path = os.path.normpath(r'C:\Users\brian\AppData\Local\chromedriver-win64\chromedriver.exe')
+        chrome_driver_path = os.environ.get('CHROMEDRIVER_PATH')
 
         # Configure ChromeOptions to set the download directory.
         chrome_options = Options()
         prefs = {'download.default_directory': download_directory}
         chrome_options.add_experimental_option('prefs', prefs)
+        chrome_options.add_argument('--no-sandbox')
 
         # Create driver.
         chrome_service = ChromeService(chrome_driver_path)
