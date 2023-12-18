@@ -171,7 +171,7 @@ class ReplitScraper:
 
         # Recursively download repls inside subfolders.
         for subfolder_link in subfolder_links:
-            new_path = path+f'{subfolder_link.split('/')[-1]}/'
+            new_path = path+f'{subfolder_link.split("/")[-1]}/'
             self.download_replits_recursive(driver, username, subfolder_link, downloaded_folders, new_path)
         
         # Close original tab after all finished with.
