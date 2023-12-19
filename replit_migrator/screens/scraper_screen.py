@@ -11,7 +11,7 @@ from urllib.parse import urlparse, urlunparse
 import os
 import shutil
 
-class ReplitScraper:
+class ScraperScreen:
     def __init__(self, root):
         self.root = root
         self.file_hierarchy = {} # Stores the file hierarchy of the repls.
@@ -37,18 +37,21 @@ class ReplitScraper:
     def create_gui(self):
         """Creates Tkinter GUI."""
 
-        # Create label and entry for username, email, and password.
-        username_label = tk.Label(self.root, text='Replit Username:')
-        username_var = tk.StringVar()
-        self.username_entry = tk.Entry(self.root, textvariable=username_var)
-        email_label = tk.Label(self.root, text='Email:')
-        email_var = tk.StringVar()
-        self.email_entry = tk.Entry(self.root, textvariable=email_var)
-        password_label = tk.Label(self.root, text='Password:')
-        password_var = tk.StringVar()
-        self.password_entry = tk.Entry(self.root, textvariable=password_var, show='*')
+        # Create frame that wraps this screen.
+        self.frame = tk.Frame(self.root)
 
-        download_button = tk.Button(self.root, text='Download Repl.its', command=self.begin_downloading_replits)
+        # Create label and entry for username, email, and password.
+        username_label = tk.Label(self.frame, text='Replit Username:')
+        username_var = tk.StringVar()
+        self.username_entry = tk.Entry(self.frame, textvariable=username_var)
+        email_label = tk.Label(self.frame, text='Email:')
+        email_var = tk.StringVar()
+        self.email_entry = tk.Entry(self.frame, textvariable=email_var)
+        password_label = tk.Label(self.frame, text='Password:')
+        password_var = tk.StringVar()
+        self.password_entry = tk.Entry(self.frame, textvariable=password_var, show='*')
+
+        download_button = tk.Button(self.frame, text='Download Repl.its', command=self.begin_downloading_replits)
 
         # Grid layout widgets
         username_label.grid(row=0, column=0, padx=10, pady=5, sticky='e')
@@ -120,7 +123,7 @@ class ReplitScraper:
         """Creates the webdriver used to access Replit."""
 
         # Set the download directory
-        download_directory = os.path.join(os.getcwd(), 'output')
+        download_directory = os.path.join(os.path.dirname(), 'output')
 
         # Setup Selenium WebDriver
         chrome_driver_path = os.environ.get('CHROMEDRIVER_PATH')
