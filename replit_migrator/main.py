@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from replit_scraper import ReplitScraper
+from replit_migrator.screens.replit_scraper import ReplitScraper
 
 
 def main():
