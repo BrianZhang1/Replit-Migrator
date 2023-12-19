@@ -1,4 +1,4 @@
-from replit_migrator.main import main
+from replit_migrator.app_handler import AppHandler
 
-# Run the main function that beings the program.
-main()
+# Start the application by creating an AppHandler object.
+AppHandler()
