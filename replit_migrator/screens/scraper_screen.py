@@ -9,12 +9,13 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from urllib.parse import urlparse, urlunparse
 import os
-import shutil
+import zipfile
 
 class ScraperScreen:
     def __init__(self, root):
         self.root = root
         self.file_hierarchy = {} # Stores the file hierarchy of the repls.
+        self.output_path = os.path.join(os.getcwd(), 'output/')
 
         self.create_gui()
 
@@ -51,7 +52,7 @@ class ScraperScreen:
         password_var = tk.StringVar()
         self.password_entry = tk.Entry(self.frame, textvariable=password_var, show='*')
 
-        download_button = tk.Button(self.frame, text='Download Repl.its', command=self.begin_downloading_replits)
+        download_button = tk.Button(self.frame, text='Download Repl.its', command=self.begin_downloading_repls)
 
         # Grid layout widgets
         username_label.grid(row=0, column=0, padx=10, pady=5, sticky='e')
@@ -63,8 +64,8 @@ class ScraperScreen:
         download_button.grid(row=3, columnspan=2, pady=10)
 
 
-    def begin_downloading_replits(self):
-        """Initiates replit downloading process."""
+    def begin_downloading_repls(self):
+        """Initiates repl downloading process."""
 
         # Get input field values.
         username = self.username_entry.get()
@@ -79,12 +80,15 @@ class ScraperScreen:
         # Create webdriver.
         driver = self.setup_webdriver()
 
+        # Create output folder (where files are downloaded to).
+        os.makedirs(self.output_path, exist_ok=True)
+
         # Login to replit.
         self.login_replit(driver, email, password)
 
-        # Start the recursive replit downloading process.
+        # Start the recursive repl downloading process.
         downloaded_folders = set()      # Stores the names of folders that have already been downloaded.
-        self.download_replits_recursive(driver, username, f'https://replit.com/@{username}', downloaded_folders)
+        self.download_repls_recursive(driver, username, f'https://replit.com/@{username}', downloaded_folders)
 
         # Scanning is complete. Notify user and clean up resources.
         self.root.attributes('-topmost', True)  # Bring the messagebox to the front
@@ -93,7 +97,7 @@ class ScraperScreen:
         driver.quit()
 
         # Organize files into folders based on file hierarchy.
-        self.organize_files(os.path.join(os.getcwd(), 'output'))
+        self.organize_files(self.output_path)
 
 
 
@@ -122,15 +126,12 @@ class ScraperScreen:
     def setup_webdriver(self):
         """Creates the webdriver used to access Replit."""
 
-        # Set the download directory
-        download_directory = os.path.join(os.path.dirname(), 'output')
-
         # Setup Selenium WebDriver
         chrome_driver_path = os.environ.get('CHROMEDRIVER_PATH')
 
         # Configure ChromeOptions to set the download directory.
         chrome_options = Options()
-        prefs = {'download.default_directory': download_directory}
+        prefs = {'download.default_directory': self.output_path}
         chrome_options.add_experimental_option('prefs', prefs)
         chrome_options.add_argument('--no-sandbox')
 
@@ -141,7 +142,7 @@ class ScraperScreen:
         return driver
 
 
-    def download_replits_recursive(self, driver, username, folder_link, downloaded_folders, path=''):
+    def download_repls_recursive(self, driver, username, folder_link, downloaded_folders, path=''):
         """
         Recursively downloads repls inside folder and all subfolders.
         
@@ -176,7 +177,7 @@ class ScraperScreen:
         # Recursively download repls inside subfolders.
         for subfolder_link in subfolder_links:
             new_path = path+f'{subfolder_link.split("/")[-1]}/'
-            self.download_replits_recursive(driver, username, subfolder_link, downloaded_folders, new_path)
+            self.download_repls_recursive(driver, username, subfolder_link, downloaded_folders, new_path)
         
         # Close original tab after all finished with.
         driver.switch_to.window(new_handle)
@@ -185,7 +186,7 @@ class ScraperScreen:
 
 
     def download_repls_in_folder(self, driver, username, path):
-        """Downloads all replits in the folder of the currently opened tab of the driver."""
+        """Downloads all repls in the folder of the currently opened tab of the driver."""
 
         # Extract links to repls inside the current folder
         repl_links = [a.get_attribute('href') for a in driver.find_elements(By.XPATH, f'//a[contains(@href, "/@{username}/") and not(contains(@href, "?path="))]')]
@@ -235,14 +236,29 @@ class ScraperScreen:
 
 
     def organize_files(self, output_folder):
-        """Organizes the downloaded files into folders based on the file hierarchy."""
+        """Unzips and organizes the downloaded files into folders based on the file hierarchy."""
 
         for file_name, file_location in self.file_hierarchy.items():
-            # Create the destination folder if it doesn't exist
-            destination_folder = os.path.join(output_folder, file_location)
-            os.makedirs(destination_folder, exist_ok=True)
-
-            # Move the file to the destination folder
             source_file = os.path.join(output_folder, f"{file_name}.zip")
-            destination_file = os.path.join(destination_folder, f"{file_name}.zip")
-            shutil.move(source_file, destination_file)
+            destination_folder = os.path.join(output_folder, file_location, file_name)
+            self.unzip_and_delete(source_file, destination_folder)
+
+
+
+    def unzip_and_delete(self, zip_file_path, extract_to_path):
+        """Unzips target zip file to designated path. Deletes zip file once complete."""
+
+        try:
+            # Open the zip file.
+            with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+                # Extract all the contents to the specified path.
+                zip_ref.extractall(extract_to_path)
+                
+            # Remove the zip file after extraction.
+            os.remove(zip_file_path)
+            
+            print(f"Successfully unzipped '{zip_file_path}' to '{extract_to_path}' and deleted the zip file.")
+            
+        except Exception as e:
+            # Print any exceptions that occur.
+            print(f"Error: {e}")
