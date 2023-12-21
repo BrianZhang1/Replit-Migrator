@@ -2,6 +2,7 @@ import tkinter as tk
 
 from replit_migrator.screens.scraper_screen import ScraperScreen
 from replit_migrator.screens.home_screen import HomeScreen
+from replit_migrator.screens.search_screen import SearchScreen
 
 
 class AppHandler:
@@ -33,6 +34,8 @@ class AppHandler:
             self.screen = HomeScreen(self.root, self.change_screen)
         elif screen == 'scraper':
             self.screen = ScraperScreen(self.root)
+        elif screen == 'search':
+            self.screen = SearchScreen(self.root)
         else:
             # Exit function with error message.
             print('Target screen not found.')
