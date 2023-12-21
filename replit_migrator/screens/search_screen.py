@@ -40,11 +40,10 @@ class SearchScreen:
         search_dir = os.path.join(os.getcwd(), 'output/')
         for root, dirs, files in os.walk(search_dir):
             for file_name in files:
-                print(file_name)
-                file_path = os.path.join(root, file_name)
+                file_path = os.path.normpath(os.path.join(root, file_name))
                 # Search through the specific file using regular expressions.
                 with open(file_path, 'r') as file:
-                    for line_number, line in enumerate(file, start=1):
+                    for line_number, line in enumerate(file):
                         if re.search(search_string, line):
                             result = f"File: {file_path}\nLine: {line_number}\n\n"
                             self.result_text.insert(tk.END, result)
