@@ -91,9 +91,7 @@ class ScraperScreen:
         self.download_repls_recursive(driver, username, f'https://replit.com/@{username}', downloaded_folders)
 
         # Scanning is complete. Notify user and clean up resources.
-        self.root.attributes('-topmost', True)  # Bring the messagebox to the front
         messagebox.showinfo('Scan Complete', 'The scan is complete, however, the downloads may still be in progress. Please ensure the downloads are finished before clicking OK.')
-        self.root.attributes('-topmost', False)
         driver.quit()
 
         # Organize files into folders based on file hierarchy.
@@ -118,22 +116,19 @@ class ScraperScreen:
         login_button.click()
 
         # Allow user to handle CAPTCHA if it appears.
-        self.root.attributes('-topmost', True)  # Bring the messagebox to the front
         messagebox.showinfo('Complete CAPTCHA if applicable', 'If a CAPTCHA appeared, please complete it, click Login, and then click OK. If no CAPTCHA appeared, simply click OK.')
-        self.root.attributes('-topmost', False)
 
 
     def setup_webdriver(self):
         """Creates the webdriver used to access Replit."""
 
         # Setup Selenium WebDriver
-        chrome_driver_path = os.environ.get('CHROMEDRIVER_PATH')
+        chrome_driver_path = os.environ.get(r'C:\Users\brian\AppData\Local\chromedriver-win64\chromedriver.exe')
 
         # Configure ChromeOptions to set the download directory.
         chrome_options = Options()
         prefs = {'download.default_directory': self.output_path}
         chrome_options.add_experimental_option('prefs', prefs)
-        chrome_options.add_argument('--no-sandbox')
 
         # Create driver.
         chrome_service = ChromeService(chrome_driver_path)
