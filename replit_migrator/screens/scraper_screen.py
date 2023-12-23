@@ -200,13 +200,22 @@ class ScraperScreen:
         """Downloads all repls in the folder of the currently opened tab of the driver."""
 
         # Extract links to repls inside the current folder
-        repl_links = [a.get_attribute('href') for a in driver.find_elements(By.XPATH, f'//a[contains(@href, "/@{username}/") and not(contains(@href, "?path="))]')]
+        anchor_attributes = driver.find_elements(By.XPATH, f'//a[contains(@href, "/@{username}/") and not(contains(@href, "?path="))]')
+        repl_links = [a.get_attribute('href') for a in anchor_attributes]
+        last_modified = [a.find_elements(By.XPATH, './div[1]/div[2]/div[1]/span[1]')[0].text for a in anchor_attributes]
+        size = [a.find_elements(By.XPATH, './div[1]/div[2]/div[1]/span[2]')[0].text for a in anchor_attributes]
+        
 
         # Download repls from all links.
         old_handles = driver.window_handles # stored to track when download tabs close.
-        for link in repl_links:
+        for i, link in enumerate(repl_links):
             file_name = link.split("/")[-1]
-            self.projects[file_name] = {'path': path, 'link': link}
+            self.projects[file_name] = {
+                'path': path, 
+                'link': link, 
+                'last_modified': last_modified[i], 
+                'size': size[i]
+                }
             download_url = f'{self.remove_query_params(link)}.zip'
             driver.execute_script(f'window.open("{download_url}", "_blank");')
 

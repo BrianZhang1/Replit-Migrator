@@ -33,8 +33,10 @@ class DatabaseHandler:
                 id INTEGER PRIMARY KEY,
                 name TEXT,
                 path TEXT,
-                link TEXT
-            )
+                link TEXT,
+                last_modified TEXT,
+                size TEXT
+            );
         ''')
         self.conn.commit()
 
@@ -52,9 +54,9 @@ class DatabaseHandler:
         # Insert new rows into the projects table.
         for name, project_data in projects.items():
             self.cursor.execute('''
-                INSERT INTO projects (name, path, link)
-                VALUES (?, ?, ?)
-            ''', (name, project_data['path'], project_data['link']))
+                INSERT INTO projects (name, path, link, last_modified, size)
+                VALUES (?, ?, ?, ?, ?);
+            ''', (name, project_data['path'], project_data['link'], project_data['last_modified'], project_data['size']))
         self.conn.commit()
 
 
@@ -65,10 +67,10 @@ class DatabaseHandler:
         Returns:
             dict: A dictionary containing project data.
         """
-        self.cursor.execute('SELECT name, path, link FROM projects')
+        self.cursor.execute('SELECT * FROM projects;')
         rows = self.cursor.fetchall()
         projects = {}
         for row in rows:
-            name, path, link = row
-            projects[name] = {'path': path, 'link': link}
+            name, path, link, last_modified, size = row
+            projects[name] = {'path': path, 'link': link, 'last_modified': last_modified, 'size': size}
         return projects
