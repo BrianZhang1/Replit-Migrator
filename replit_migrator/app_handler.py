@@ -4,6 +4,7 @@ from replit_migrator.database_handler import DatabaseHandler
 from replit_migrator.screens.scraper_screen import ScraperScreen
 from replit_migrator.screens.home_screen import HomeScreen
 from replit_migrator.screens.search_screen import SearchScreen
+from replit_migrator.screens.report_screen import ReportScreen
 
 
 class AppHandler:
@@ -41,6 +42,8 @@ class AppHandler:
             self.screen = ScraperScreen(self.root, self.data_handler)
         elif screen == 'search':
             self.screen = SearchScreen(self.root)
+        elif screen == 'report':
+            self.screen = ReportScreen(self.root, self.data_handler)
         else:
             # Exit function with error message.
             print('Target screen not found.')

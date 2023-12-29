@@ -23,3 +23,5 @@ class HomeScreen:
         self.migration_button.pack()
         self.search_button = tk.Button(self.frame, text="Search", command=lambda: self.change_screen('search'))
         self.search_button.pack()
+        self.report_button = tk.Button(self.frame, text="Report", command=lambda: self.change_screen('report'))
+        self.report_button.pack()

@@ -71,6 +71,6 @@ class DatabaseHandler:
         rows = self.cursor.fetchall()
         projects = {}
         for row in rows:
-            name, path, link, last_modified, size = row
+            id, name, path, link, last_modified, size = row
             projects[name] = {'path': path, 'link': link, 'last_modified': last_modified, 'size': size}
         return projects
