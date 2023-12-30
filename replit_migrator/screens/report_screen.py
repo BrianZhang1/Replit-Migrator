@@ -2,6 +2,9 @@ import tkinter as tk
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
+import matplotlib.pyplot as plt
+import os
+from PIL import Image
 
 class ReportScreen:
     def __init__(self, root, data_handler):
@@ -32,13 +35,20 @@ class ReportScreen:
     def generate_report(self):
         """Generates a PDF report of repl data."""
 
-        # Create PDF document
+        # Create PDF document.
         self.pdf_canvas = canvas.Canvas('report.pdf', pagesize=letter)
 
-        self.draw_text("Repl.it Report", font_size=20, line_spacing=10)
-        self.draw_text(f"Total Projects: {len(self.data)}")
+        # Gather data.
+        file_type_count = self.count_file_types()
 
-        # Save the PDF
+        self.draw_text("Repl.it Report", font_size=20, line_spacing=10)
+        self.draw_text(f"Total projects: {len(self.data)}")
+        self.draw_text(f"Total lines of code: {sum(file_type_count.values())}")
+        self.draw_pie_chart(file_type_count.values(), file_type_count.keys(), "File Types", 4*inch)
+        for file_type in file_type_count:
+            self.draw_text(f"Lines of {file_type}: {file_type_count[file_type]}")
+
+        # Save the PDF.
         self.pdf_canvas.save()
 
 
@@ -58,3 +68,66 @@ class ReportScreen:
 
         # Move next line down.
         self.line_begin += font_size + line_spacing
+
+
+    def draw_pie_chart(self, data, labels, title, x=inch, y=None):
+        """
+        Draws a pie chart on the canvas, assuming a coordinate system where the
+        origin is at the top left, given top left corner coordinates.
+        """
+
+        # If y is not specified, use the current line.
+        if y is None:
+            y = self.line_begin
+
+        # Plot the pie chart.
+        width = 5
+        height = 3
+        plt.figure(figsize=(width, height))
+        plt.pie(data, labels=labels)
+        plt.title(title)
+        plt.savefig('pie_chart.png')
+        plt.close()
+
+        # Draw the pie chart on the canvas.
+        self.pdf_canvas.drawInlineImage('pie_chart.png', x, letter[1] - height*inch - y, width=width*inch, height=height*inch)
+
+        # Delete temporary pie chart file.
+        os.remove('pie_chart.png')
+
+
+    def count_file_types(self):
+        """Counts the total number of lines of each file type, by file extension."""
+
+        # Store the count of each file type in a dictionary.
+        # Key: file extension, Value: count
+        count = dict()
+
+        # For each file, count the number of lines and add it to the count dictionary.
+        search_dir = os.path.join(os.getcwd(), 'output/')
+        for root, dirs, files in os.walk(search_dir):
+            for file in files:
+                extension = file.split('.')[-1]
+                file_path = os.path.normpath(os.path.join(root, file))
+                file_line_count = self.count_lines(file_path)
+                if file_line_count == -1:
+                    # Not a readable file, perhaps an image or binary file. Skip this file.
+                    continue
+                count[extension] = count.get(extension, 0) + file_line_count
+
+        return count
+
+
+    def count_lines(self, file_path):
+        """Counts the number of lines in a file."""
+
+        count = 0
+        try:
+            with open(file_path, 'r') as file:
+                for line in file:
+                    count += 1
+        except UnicodeDecodeError:
+            # Not a readable file, perhaps an image or binary file.
+            return -1
+        
+        return count
