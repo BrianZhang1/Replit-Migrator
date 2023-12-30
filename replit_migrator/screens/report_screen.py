@@ -8,6 +8,9 @@ class ReportScreen:
         self.root = root
         self.data = data_handler.read()
 
+        self.pdf_canvas = None  # Canvas for PDF document, initialized when needed.
+        self.line_begin = inch  # Tracks the y coordinate of the beginning of the next line to be drawn.
+
         self.create_gui()
 
 
@@ -30,21 +33,28 @@ class ReportScreen:
         """Generates a PDF report of repl data."""
 
         # Create PDF document
-        pdf_canvas = canvas.Canvas('report.pdf', pagesize=letter)
+        self.pdf_canvas = canvas.Canvas('report.pdf', pagesize=letter)
 
-        # Add total project text
-        self.draw_text(pdf_canvas, f"Total Projects: {len(self.data)}", 12, inch, inch)
+        self.draw_text("Repl.it Report", font_size=20, line_spacing=10)
+        self.draw_text(f"Total Projects: {len(self.data)}")
 
         # Save the PDF
-        pdf_canvas.save()
+        self.pdf_canvas.save()
 
 
-    def draw_text(self, pdf_canvas, text, font_size, x, y):
+    def draw_text(self, text, font_size=12, line_spacing=4, x=inch, y=None):
         """
         Draws text on the canvas, assuming a coordinate system where the
         origin is at the top left, given font size and top left corner coordinates.
         """
 
-        pdf_canvas.setFont("Helvetica", font_size)
+        # If y is not specified, use the current line.
+        if y is None:
+            y = self.line_begin
+
+        self.pdf_canvas.setFont("Helvetica", font_size)
         actual_y = letter[1] - font_size - y
-        pdf_canvas.drawString(x, actual_y, text)
+        self.pdf_canvas.drawString(x, actual_y, text)
+
+        # Move next line down.
+        self.line_begin += font_size + line_spacing
