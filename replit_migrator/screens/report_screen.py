@@ -40,14 +40,18 @@ class ReportScreen:
         # Gather data.
         file_type_count, file_count = self.count_files_and_types()
         total_lines = sum(file_type_count.values())
+        total_size = sum([float(self.data[project]['size'].split(' ')[0]) for project in self.data])
 
         self.draw_text('Repl.it Report', font_size=20, line_spacing=10)
+        self.draw_pie_chart(file_type_count.values(), file_type_count.keys(), 'File Types', 4*inch)
         self.draw_text(f'Total projects: {len(self.data)}')
         self.draw_text(f'Total files: {file_count}')
         self.draw_text(f'Total lines of code: {total_lines}')
-        self.draw_text(f'Average lines per file: {round(total_lines/file_count, 2)}')
+        self.draw_text(f'Total size: {total_size} MiB')
         self.draw_text('', font_size=0, line_spacing=10)
-        self.draw_pie_chart(file_type_count.values(), file_type_count.keys(), 'File Types', 4*inch)
+        self.draw_text(f'Average lines per file: {round(total_lines/file_count, 2)}')
+        self.draw_text(f'Average size per file: {round(total_size/file_count, 2)}')
+        self.draw_text('', font_size=0, line_spacing=10)
         for file_type in file_type_count:
             self.draw_text(f'Lines of {file_type}: {file_type_count[file_type]}')
 
