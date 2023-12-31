@@ -1,5 +1,6 @@
 output/
 .vscode/
+report.pdf
 
 
 # Byte-compiled / optimized / DLL files
