@@ -25,3 +25,5 @@ class HomeScreen:
         self.search_button.pack()
         self.report_button = tk.Button(self.frame, text="Report", command=lambda: self.change_screen('report'))
         self.report_button.pack()
+        self.chat_button = tk.Button(self.frame, text="Chat", command=lambda: self.change_screen('chat'))
+        self.chat_button.pack()

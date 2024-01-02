@@ -1,3 +1,4 @@
 selenium
 matplotlib
 reportlab
+openai

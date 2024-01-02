@@ -5,6 +5,7 @@ from replit_migrator.screens.scraper_screen import ScraperScreen
 from replit_migrator.screens.home_screen import HomeScreen
 from replit_migrator.screens.search_screen import SearchScreen
 from replit_migrator.screens.report_screen import ReportScreen
+from replit_migrator.screens.chat_screen import ChatScreen
 
 
 class AppHandler:
@@ -44,6 +45,8 @@ class AppHandler:
             self.screen = SearchScreen(self.root)
         elif screen == 'report':
             self.screen = ReportScreen(self.root, self.data_handler)
+        elif screen == 'chat':
+            self.screen = ChatScreen(self.root)
         else:
             # Exit function with error message.
             print('Target screen not found.')
