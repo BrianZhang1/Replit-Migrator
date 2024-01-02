@@ -8,7 +8,7 @@ import os
 class ReportScreen:
     def __init__(self, root, data_handler):
         self.root = root
-        self.data = data_handler.read()
+        self.data = data_handler.read_projects()
 
         self.pdf_canvas = None  # Canvas for PDF document, initialized when needed.
         self.line_begin = inch  # Tracks the y coordinate of the beginning of the next line to be drawn.

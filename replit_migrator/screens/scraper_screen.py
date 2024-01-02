@@ -112,7 +112,7 @@ class ScraperScreen:
         self.organize_files(self.output_path)
 
         # Write data to database.
-        self.data_handler.write(self.projects)
+        self.data_handler.write_projects(self.projects)
 
 
     def login_replit(self, driver, email, password):

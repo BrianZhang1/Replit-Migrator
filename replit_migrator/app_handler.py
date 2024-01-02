@@ -46,7 +46,7 @@ class AppHandler:
         elif screen == 'report':
             self.screen = ReportScreen(self.root, self.data_handler)
         elif screen == 'chat':
-            self.screen = ChatScreen(self.root)
+            self.screen = ChatScreen(self.root, self.data_handler)
         else:
             # Exit function with error message.
             print('Target screen not found.')

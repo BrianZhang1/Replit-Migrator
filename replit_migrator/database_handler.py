@@ -21,12 +21,12 @@ class DatabaseHandler:
         self.db_path = db_path
         self.conn = sqlite3.connect(db_path)
         self.cursor = self.conn.cursor()
-        self.create_table()
+        self.create_tables()
 
 
-    def create_table(self):
+    def create_tables(self):
         """
-        Creates the projects table if it doesn't exist.
+        Creates the projects and chat_history tables if they doesn't exist.
         """
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS projects (
@@ -38,10 +38,17 @@ class DatabaseHandler:
                 size TEXT
             );
         ''')
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS chat_history (
+                id INTEGER PRIMARY KEY,
+                role TEXT,
+                content TEXT
+            );
+        ''')
         self.conn.commit()
 
 
-    def write(self, projects):
+    def write_projects(self, projects):
         """
         Writes project data to the projects table.
 
@@ -60,7 +67,7 @@ class DatabaseHandler:
         self.conn.commit()
 
 
-    def read(self):
+    def read_projects(self):
         """
         Reads project data from the projects table.
 
@@ -74,3 +81,38 @@ class DatabaseHandler:
             id, name, path, link, last_modified, size = row
             projects[name] = {'path': path, 'link': link, 'last_modified': last_modified, 'size': size}
         return projects
+
+
+    def write_chat_history(self, chat_history):
+        """
+        Writes chat history data to the chat_history table.
+
+        Args:
+            chat_history (list): A list containing chat history data.
+        """
+        # Delete all rows from the chat_history table.
+        self.cursor.execute('DELETE FROM chat_history')
+
+        # Insert new rows into the chat_history table.
+        for message in chat_history:
+            self.cursor.execute('''
+                INSERT INTO chat_history (role, content)
+                VALUES (?, ?);
+            ''', (message['role'], message['content']))
+        self.conn.commit()
+    
+
+    def read_chat_history(self):
+        """
+        Reads chat history data from the chat_history table.
+
+        Returns:
+            list: A list containing chat history data.
+        """
+        self.cursor.execute('SELECT * FROM chat_history;')
+        rows = self.cursor.fetchall()
+        chat_history = []
+        for row in rows:
+            id, role, content = row
+            chat_history.append({'role': role, 'content': content})
+        return chat_history
