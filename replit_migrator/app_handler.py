@@ -42,7 +42,7 @@ class AppHandler:
         elif screen == 'scraper':
             self.screen = ScraperScreen(self.root, self.data_handler)
         elif screen == 'search':
-            self.screen = SearchScreen(self.root)
+            self.screen = SearchScreen(self.root, self.data_handler)
         elif screen == 'report':
             self.screen = ReportScreen(self.root, self.data_handler)
         elif screen == 'chat':
