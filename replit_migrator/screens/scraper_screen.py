@@ -2,6 +2,8 @@
 
 import time
 import tkinter as tk
+from tkinter import ttk
+from tkinter import scrolledtext
 from tkinter import messagebox
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -66,9 +68,17 @@ class ScraperScreen:
         password_var = tk.StringVar()
         self.password_entry = tk.Entry(self.frame, textvariable=password_var, show='*')
 
+        # Create download button to initiate migration.
         download_button = tk.Button(self.frame, text='Download Repl.its', command=self.begin_downloading_repls)
 
-        # Grid layout widgets
+        # Create status scrolledtext.
+        self.status_label = tk.Label(self.frame, text='Migration Status')
+        self.status_scrolledtext = scrolledtext.ScrolledText(self.frame, height=10, width=80)
+        self.status_scrolledtext.insert(tk.END, 'Status updates will appear here once migration has begun.\n')
+        self.status_checkbox = ttk.Checkbutton(self.frame, text='Show status updates', command=self.toggle_status_updates, state='selected')
+        self.status_checkbox.state(['selected'])
+
+        # Grid layout widgets.
         username_label.grid(row=0, column=0, padx=10, pady=5, sticky='e')
         self.username_entry.grid(row=0, column=1, padx=10, pady=5, sticky='w')
         email_label.grid(row=1, column=0, padx=10, pady=5, sticky='e')
@@ -76,12 +86,19 @@ class ScraperScreen:
         password_label.grid(row=2, column=0, padx=10, pady=5, sticky='e')
         self.password_entry.grid(row=2, column=1, padx=10, pady=5, sticky='w')
         download_button.grid(row=3, columnspan=2, pady=10)
+        self.status_label.grid(row=4, columnspan=2, pady=(10, 0))
+        self.status_checkbox.grid(row=5, columnspan=2)
+        self.status_scrolledtext.grid(row=6, columnspan=2, padx=10, pady=5)
 
 
     def begin_downloading_repls(self):
         """Initiates repl downloading process."""
 
+        # Update status to indicate download has begun.
+        self.status_scrolledtext.insert(tk.END, 'Repl migration initiated.\n')
+
         # Get input field values.
+        self.status_scrolledtext.insert(tk.END, 'Retrieving login credentials from input fields...\n')
         username = self.username_entry.get()
         email = self.email_entry.get()
         password = self.password_entry.get()
@@ -92,27 +109,40 @@ class ScraperScreen:
             return
 
         # Create webdriver.
+        self.status_scrolledtext.insert(tk.END, 'Creating browser emulator...\n')
         driver = self.setup_webdriver()
 
         # Create output folder (where files are downloaded to).
+        self.status_scrolledtext.insert(tk.END, 'Creating output directory...\n')
         os.makedirs(self.output_path, exist_ok=True)
 
         # Login to replit.
+        self.status_scrolledtext.insert(tk.END, 'Logging into Replit...\n')
         self.login_replit(driver, email, password)
+        self.status_scrolledtext.insert(tk.END, 'Login successful.\n')
 
         # Start the recursive repl downloading process.
+        self.status_scrolledtext.insert(tk.END, 'Beginning download process...\n')
         downloaded_folders = set()      # Stores the names of folders that have already been downloaded.
         self.download_repls_recursive(driver, username, f'https://replit.com/@{username}', downloaded_folders)
+        self.status_scrolledtext.insert(tk.END, 'Download process complete.\n')
 
         # Scanning is complete. Notify user and clean up resources.
         messagebox.showinfo('Scan Complete', 'The scan is complete, however, the downloads may still be in progress. Please ensure the downloads are finished before clicking OK.')
+        self.status_scrolledtext.insert(tk.END, 'Exiting browser emulator...\n')
         driver.quit()
 
         # Organize files into folders based on file hierarchy.
+        self.status_scrolledtext.insert(tk.END, 'Organizing files...\n')
         self.organize_files(self.output_path)
 
         # Write data to database.
+        self.status_scrolledtext.insert(tk.END, 'Updating database...\n')
         self.data_handler.write_projects(self.projects)
+
+        # Update status to indicate migration has completed.
+        self.status_scrolledtext.insert(tk.END, 'Migration complete.\n')
+        self.status_scrolledtext.configure(state='disabled')
 
 
     def login_replit(self, driver, email, password):
@@ -180,9 +210,11 @@ class ScraperScreen:
         time.sleep(3)   # Wait for the page to load.
 
         # Download repls inside the current folder.
+        self.status_scrolledtext.insert(tk.END, 'Currently downloading folder: '+path+'\n')
         self.download_repls_in_folder(driver, username, path)
 
         # Extract links to subfolders.
+        self.status_scrolledtext.insert(tk.END, 'Extracting subfolders...\n')
         subfolder_links = [a.get_attribute('href') for a in driver.find_elements(By.XPATH, f'//a[contains(@href, "/@{username}?path=folder")]')]
 
         # Recursively download repls inside subfolders.
@@ -208,6 +240,7 @@ class ScraperScreen:
 
         # Download repls from all links.
         old_handles = driver.window_handles # stored to track when download tabs close.
+        n_repls = len(repl_links)
         for i, link in enumerate(repl_links):
             file_name = link.split("/")[-1]
             self.projects[file_name] = {
@@ -217,6 +250,7 @@ class ScraperScreen:
                 'size': size[i]
                 }
             download_url = f'{self.remove_query_params(link)}.zip'
+            self.status_scrolledtext.insert(tk.END, f'\t({i+1}/{n_repls}) Downloading project "{file_name}"...\n')
             driver.execute_script(f'window.open("{download_url}", "_blank");')
 
         # Wait for download tabs to close.
@@ -262,9 +296,11 @@ class ScraperScreen:
             project_location = project_data['path']
             source_file = os.path.join(output_folder, f"{project_name}.zip")
             destination_folder = os.path.join(output_folder, project_location, project_name)
+            self.status_scrolledtext.insert(tk.END, f'Unzipping {project_name}...\n')
             self.unzip_and_delete(source_file, destination_folder)
 
         # Deletes all configuration files automatically generated by Replit.
+        self.status_scrolledtext.insert(tk.END, 'Deleting Replit configuration files...\n')
         self.delete_config_files()
 
 
@@ -279,8 +315,6 @@ class ScraperScreen:
                 
             # Remove the zip file after extraction.
             os.remove(zip_file_path)
-            
-            print(f"Successfully unzipped '{zip_file_path}' to '{extract_to_path}' and deleted the zip file.")
             
         except Exception as e:
             # Print any exceptions that occur.
@@ -307,6 +341,15 @@ class ScraperScreen:
                 if dir in self.replit_config_dirs:
                     dir_path = os.path.join(root, dir)
                     shutil.rmtree(dir_path)
+
+
+    def toggle_status_updates(self):
+        """Toggles visibility of the status updates scrolledtext"""
+
+        if self.status_checkbox.instate(['selected']):
+            self.status_scrolledtext.grid()
+        else:
+            self.status_scrolledtext.grid_remove()
 
 
 
