@@ -1,0 +1,30 @@
+# The following is a list of directories/files to ignore when scraping replit.
+# Begin a line with # to create a comment.
+# Add desired directory/file names under the relevant header on a new line.
+# Use the * wildcard followed by an extension to ignore all files of a certain type.
+# DO NOT alter the headers or else the files will not be properly read by the application.
+
+
+
+@(DIRECTORIES)
+.cache
+.upm
+target
+.ccls-cache
+.settings
+
+
+
+
+@(FILES)
+.replit
+poetry.lock
+pyproject.toml
+replit_zip_error_log.txt
+.breakpoints
+Makefile
+*.class
+pom.xml
+replit.nix
+.classpath
+.project
