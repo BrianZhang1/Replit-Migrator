@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
@@ -12,6 +13,12 @@ class ReportScreen:
 
         self.pdf_canvas = None  # Canvas for PDF document, initialized when needed.
         self.line_begin = inch  # Tracks the y coordinate of the beginning of the next line to be drawn.
+        self.report_options = {
+            'Total Metrics': True,
+            'Average Metrics': True,
+            'Line Counts': True,
+            'Project Index': True
+        }
 
         self.create_gui()
 
@@ -26,9 +33,26 @@ class ReportScreen:
         self.title_label = tk.Label(self.frame, text="Report Generator", font=("Helvetica", 20))
         self.title_label.pack(pady=20)
 
+        self.option_widgets = {}
+        for option in self.report_options:
+            option_enabled = self.report_options[option]
+            option_checkbox = ttk.Checkbutton(self.frame, text=option, command=lambda option=option: self.update_option(option), state='selected')
+            if option_enabled:
+                option_checkbox.state(['selected'])
+            option_checkbox.pack()
+            self.option_widgets[option] = option_checkbox
+
         # Create button to generate report.
         self.generate_button = tk.Button(self.frame, text="Generate Report", command=self.generate_report)
         self.generate_button.pack()
+
+
+    def update_option(self, option):
+        clicked_checkbox = self.option_widgets[option]
+        if clicked_checkbox.instate(['selected']):
+            self.report_options[option] = True
+        else:
+            self.report_options[option] = False
 
     
     def generate_report(self):
@@ -42,21 +66,34 @@ class ReportScreen:
         total_lines = sum(file_type_count.values())
         total_size = sum([float(self.data[project]['size'].split(' ')[0]) for project in self.data])
 
-        self.draw_text('Repl.it Report', font_size=20, line_spacing=10)
-        self.draw_pie_chart(file_type_count.values(), file_type_count.keys(), 'File Types', 4*inch)
-        self.draw_text(f'Total projects: {len(self.data)}')
-        self.draw_text(f'Total files: {file_count}')
-        self.draw_text(f'Total lines of code: {total_lines}')
-        self.draw_text(f'Total size: {total_size} MiB')
-        self.draw_text('', font_size=0, line_spacing=10)
-        self.draw_text(f'Average lines per file: {round(total_lines/file_count, 2)}')
-        self.draw_text(f'Average size per file: {round(total_size/file_count, 2)}')
-        self.draw_text('', font_size=0, line_spacing=10)
-        for file_type in file_type_count:
-            self.draw_text(f'Lines of {file_type}: {file_type_count[file_type]}')
+        self.draw_text('Repl.it Report', font_size=20, line_spacing=20)
+        if self.report_options['Line Counts']:
+            self.draw_pie_chart(file_type_count.values(), file_type_count.keys(), 'File Types', 3.5*inch)
+        if self.report_options['Total Metrics']:
+            self.draw_text(f'Total projects: {len(self.data)}')
+            self.draw_text(f'Total files: {file_count}')
+            self.draw_text(f'Total lines of code: {total_lines}')
+            self.draw_text(f'Total size: {total_size} MiB')
+            self.draw_text('', font_size=0, line_spacing=10)
+        if self.report_options['Average Metrics']:
+            self.draw_text(f'Average lines per file: {round(total_lines/file_count, 2)}')
+            self.draw_text(f'Average size per file: {round(total_size/file_count, 2)} MiB')
+            self.draw_text('', font_size=0, line_spacing=10)
+        if self.report_options['Line Counts']:
+            for file_type in file_type_count:
+                self.draw_text(f'Lines of {file_type}: {file_type_count[file_type]}')
+        if self.report_options['Project Index']:
+            self.next_page()
+            self.draw_text('Project Index', font_size=15, line_spacing=20)
+            self.draw_project_details(None, header=True)
+            for project_name in self.data:
+                self.draw_project_details(project_name)
 
         # Save the PDF.
         self.pdf_canvas.save()
+
+        # Reset the line begin y-coordinate for proper formatting in consecutive report generation.
+        self.line_begin = inch
 
 
     def draw_text(self, text, font_size=12, line_spacing=4, x=inch, y=None):
@@ -66,15 +103,17 @@ class ReportScreen:
         """
 
         # If y is not specified, use the current line.
-        if y is None:
+        y_inputted = False if y is None else True
+        if not y_inputted:
             y = self.line_begin
 
         self.pdf_canvas.setFont('Helvetica', font_size)
         actual_y = letter[1] - font_size - y
         self.pdf_canvas.drawString(x, actual_y, text)
 
-        # Move next line down.
-        self.line_begin += font_size + line_spacing
+        if not y_inputted:
+            # Move next line down.
+            self.line_begin += font_size + line_spacing
 
 
     def draw_pie_chart(self, data, labels, title, x=inch, y=None):
@@ -101,6 +140,44 @@ class ReportScreen:
 
         # Delete temporary pie chart file.
         os.remove('pie_chart.png')
+
+
+    def next_page(self):
+        """Finishes the current page and resets the line begin coordinate."""
+
+        self.pdf_canvas.showPage()
+        self.line_begin = inch
+
+
+    def draw_project_details(self, project_name, header=False):
+        temp = None
+        if header:
+            project_name = 'Name'
+            try:
+                temp = self.data['Name']
+            except KeyError:
+                pass
+            self.data['Name'] = {
+                'last_modified': 'Last Modified',
+                'size': 'Size',
+                'path': 'Path'
+            }
+
+        cur_x = inch
+        self.draw_text(project_name, x=cur_x, y=self.line_begin)
+        cur_x += inch*1.5
+        self.draw_text(self.data[project_name]['last_modified'], x=cur_x, y=self.line_begin)
+        cur_x += inch*1.5
+        self.draw_text(self.data[project_name]['size'], x=cur_x, y=self.line_begin)
+        cur_x += inch*1.5
+        self.draw_text(self.data[project_name]['path'], x=cur_x, y=self.line_begin)
+        self.draw_text('')
+
+        if header:
+            if temp is not None:
+                self.data['Name'] = temp
+            else:
+                del self.data['Name']
 
 
     def count_files_and_types(self):
