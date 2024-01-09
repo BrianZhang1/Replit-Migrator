@@ -91,6 +91,16 @@ class ScraperScreen:
     def begin_downloading_repls(self):
         """Initiates repl downloading process."""
 
+        # Create output folder (where files are downloaded to).
+        self.status_scrolledtext.insert(tk.END, 'Creating output directory...\n')
+        try:
+            os.makedirs(self.output_path)
+        except FileExistsError:
+            # Output directory already exists and must be deleted prior to migration to prevent file/project name conflicts.
+            # Notify user and cancel migration operation.
+            messagebox.showerror('Error', 'Output directory already exists. Please relocate/delete the output directory and try again.')
+            return
+
         # Check if a project has been selected from the download existing screen.
         if self.selected_project_id is not None:
             # Notify user that existing scan is being downloaded.
@@ -116,10 +126,6 @@ class ScraperScreen:
         if not username or not email or not password:
             messagebox.showwarning('Warning', 'Please enter Replit username, email, and password.')
             return
-
-        # Create output folder (where files are downloaded to).
-        self.status_scrolledtext.insert(tk.END, 'Creating output directory...\n')
-        os.makedirs(self.output_path, exist_ok=True)
 
         # Execute webdriver in a separate thread to prevent GUI from freezing.
         self.status_scrolledtext.insert(tk.END, 'Creating thread to execute browser emulator...\n')
