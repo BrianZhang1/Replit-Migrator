@@ -60,9 +60,23 @@ class DatabaseHandler:
         self.conn.commit()
 
 
+    def get_migration_tables(self):
+        """
+        Retrieves the details of all entries in the migrations table and returns them as a list,
+        where each entry is a dictionary containing the id and date_time of the migration.
+        """
+        self.cursor.execute('SELECT * FROM migrations;')
+        rows = self.cursor.fetchall()
+        migrations = []
+        for row in rows:
+            id, date_time = row
+            migrations.append({'id': id, 'date_time': date_time})
+        return migrations
+
+
     def write_projects(self, projects, table_id=None):
         """
-        Writes project data to the projects table.
+        Writes project data to the specified projects table.
         """
 
         if table_id is None:
@@ -86,10 +100,7 @@ class DatabaseHandler:
 
     def read_projects(self, table_id=None):
         """
-        Reads project data from the projects table.
-
-        Returns:
-            dict: A dictionary containing project data.
+        Reads project data from the specified projects table.
         """
 
         if table_id is None:

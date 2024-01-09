@@ -21,6 +21,8 @@ class HomeScreen:
         # Create buttons that navigate to other screens.
         self.migration_button = tk.Button(self.frame, text="Begin Migration", command=lambda: self.change_screen('scraper'))
         self.migration_button.pack()
+        self.download_existing_button = tk.Button(self.frame, text="Download Existing Scan", command=lambda: self.change_screen('download_existing'))
+        self.download_existing_button.pack()
         self.search_button = tk.Button(self.frame, text="Search", command=lambda: self.change_screen('search'))
         self.search_button.pack()
         self.report_button = tk.Button(self.frame, text="Report", command=lambda: self.change_screen('report'))

@@ -6,6 +6,7 @@ from replit_migrator.screens.home_screen import HomeScreen
 from replit_migrator.screens.search_screen import SearchScreen
 from replit_migrator.screens.report_screen import ReportScreen
 from replit_migrator.screens.chat_screen import ChatScreen
+from replit_migrator.screens.download_existing_screen import DownloadExistingScreen
 
 
 class AppHandler:
@@ -21,6 +22,8 @@ class AppHandler:
 
         # Initialize data handler.
         self.data_handler = DatabaseHandler('replit_migrator/db.sqlite3')
+
+        self.selected_project_id = None
 
         # Start the tkinter main loop.
         self.root.mainloop()
@@ -40,7 +43,12 @@ class AppHandler:
         if screen == 'home':
             self.screen = HomeScreen(self.root, self.change_screen)
         elif screen == 'scraper':
-            self.screen = ScraperScreen(self.root, self.data_handler)
+            if self.selected_project_id is None:
+                self.screen = ScraperScreen(self.root, self.data_handler)
+            else:
+                self.screen = ScraperScreen(self.root, self.data_handler, self.selected_project_id)
+        elif screen == 'download_existing':
+            self.screen = DownloadExistingScreen(self.root, self.change_screen, self.data_handler, self.select_project)
         elif screen == 'search':
             self.screen = SearchScreen(self.root, self.data_handler)
         elif screen == 'report':
@@ -54,3 +62,10 @@ class AppHandler:
 
         # Add new screen to display.
         self.screen.frame.pack()
+
+
+    def select_project(self, project_id):
+        """Selects a project to scrape."""
+
+        self.selected_project_id = project_id
+        self.change_screen('scraper')

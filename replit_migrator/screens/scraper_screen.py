@@ -16,9 +16,11 @@ import shutil
 import threading
 
 class ScraperScreen:
-    def __init__(self, root, data_handler):
+    def __init__(self, root, data_handler, selected_project_id=None):
         self.root = root
         self.data_handler = data_handler
+        self.selected_project_id = selected_project_id
+
         self.projects = {} # Stores project data (name, path, link).
         self.output_path = os.path.join(os.getcwd(), 'output/')
 
@@ -88,6 +90,15 @@ class ScraperScreen:
 
     def begin_downloading_repls(self):
         """Initiates repl downloading process."""
+
+        # Check if a project has been selected from the download existing screen.
+        if self.selected_project_id is not None:
+            # Notify user that existing scan is being downloaded.
+            self.status_scrolledtext.insert(tk.END, 'Downloading existing scan. The download will proceed silently.\n')
+
+            # Download existing scan instead of proceeding with new migration.
+            self.download_existing_scan()
+            return
 
         # Update status to indicate download has begun.
         self.status_scrolledtext.insert(tk.END, 'Repl migration initiated.\n')
@@ -414,12 +425,33 @@ class ScraperScreen:
             self.status_scrolledtext.grid_remove()
 
 
+    def download_existing_scan(self):
+        """
+        Downloads a project using the data from an existing scan.
+        """
 
+        # Retrieve data for selected project.
+        self.projects = self.data_handler.read_projects(self.selected_project_id)
 
+        # Extract the repl links from the projects.
+        repl_links = [project['link'] for project in self.projects.values()]
 
-        
+        # Create webdriver.
+        driver = self.setup_webdriver()
 
-        
+        # Login to replit.
+        self.login_replit(driver, self.email_entry.get(), self.password_entry.get())
 
+        # Open all repl links in new tabs to download them.
+        for link in repl_links:
+            driver.execute_script(f'window.open("{link}.zip", "_blank");')
 
-        
+        # Show a message box to ask the user to wait for the downloads to finish.
+        messagebox.showinfo('Downloads in progress', 'Repl downloading is in progress. Please ensure the downloads are finished before clicking OK.')
+
+        # Organize files into folders based on file hierarchy.
+        self.organize_files(self.output_path)
+
+        # Show a message box to indicate the download is complete.
+        messagebox.showinfo('Download complete', 'The download is complete. Please check the output folder for the downloaded files.')
+
