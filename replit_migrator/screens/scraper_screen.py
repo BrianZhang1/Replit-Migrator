@@ -131,6 +131,7 @@ class ScraperScreen:
         # Write data to database.
         self.status_scrolledtext.insert(tk.END, 'Updating database...\n')
         self.status_scrolledtext.see(tk.END)
+        self.data_handler.create_migration_table(time.strftime('%Y-%m-%d %H:%M:%S'))
         self.data_handler.write_projects(self.projects)
 
         # Update status to indicate migration has completed.

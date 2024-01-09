@@ -29,13 +29,9 @@ class DatabaseHandler:
         Creates the projects and chat_history tables if they doesn't exist.
         """
         self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS projects (
+            CREATE TABLE IF NOT EXISTS migrations (
                 id INTEGER PRIMARY KEY,
-                name TEXT,
-                path TEXT,
-                link TEXT,
-                last_modified TEXT,
-                size TEXT
+                date_time TEXT
             );
         ''')
         self.cursor.execute('''
@@ -48,33 +44,61 @@ class DatabaseHandler:
         self.conn.commit()
 
 
-    def write_projects(self, projects):
+    def create_migration_table(self, date_time):
+        self.cursor.execute('INSERT INTO migrations (date_time) VALUES (?);', (date_time,))
+        id = self.cursor.execute('SELECT last_insert_rowid();').fetchone()[0]
+        self.cursor.execute(f'''
+            CREATE TABLE IF NOT EXISTS projects_{id} (
+                id INTEGER PRIMARY KEY,
+                name TEXT,
+                path TEXT,
+                link TEXT,
+                last_modified TEXT,
+                size TEXT
+            );
+        ''')
+        self.conn.commit()
+
+
+    def write_projects(self, projects, table_id=None):
         """
         Writes project data to the projects table.
-
-        Args:
-            projects (dict): A dictionary containing project data.
         """
+
+        if table_id is None:
+            # If id not specified, use id of the latest migration table created.
+            table_id = self.cursor.execute('SELECT id FROM migrations ORDER BY id DESC LIMIT 1;').fetchone()[0]
+            
+
+        table_name = f'projects_{table_id}'
+
         # Delete all rows from the projects table.
-        self.cursor.execute('DELETE FROM projects')
+        self.cursor.execute(f'DELETE FROM {table_name}')
 
         # Insert new rows into the projects table.
         for name, project_data in projects.items():
-            self.cursor.execute('''
-                INSERT INTO projects (name, path, link, last_modified, size)
+            self.cursor.execute(f'''
+                INSERT INTO {table_name} (name, path, link, last_modified, size)
                 VALUES (?, ?, ?, ?, ?);
             ''', (name, project_data['path'], project_data['link'], project_data['last_modified'], project_data['size']))
         self.conn.commit()
 
 
-    def read_projects(self):
+    def read_projects(self, table_id=None):
         """
         Reads project data from the projects table.
 
         Returns:
             dict: A dictionary containing project data.
         """
-        self.cursor.execute('SELECT * FROM projects;')
+
+        if table_id is None:
+            # If id not specified, use id of the latest migration table created.
+            table_id = self.cursor.execute('SELECT id FROM migrations ORDER BY id DESC LIMIT 1;').fetchone()[0]
+
+        table_name = f'projects_{table_id}'
+
+        self.cursor.execute(f'SELECT * FROM {table_name};')
         rows = self.cursor.fetchall()
         projects = {}
         for row in rows:
