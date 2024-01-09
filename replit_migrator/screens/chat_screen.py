@@ -27,6 +27,9 @@ class ChatScreen:
         self.send_button = tk.Button(self.frame, text="Send", command=self.send_message)
         self.send_button.pack(padx=10, pady=10)
 
+        self.clear_button = tk.Button(self.frame, text="Clear", command=self.clear_chat)
+        self.clear_button.pack(padx=10, pady=10)
+
 
     def send_message(self):
         user_message = self.input_entry.get()
@@ -51,12 +54,24 @@ class ChatScreen:
 
 
     def get_openai_response(self, user_message):
+        system_prompt = '''
+            You are an assistant that answers user's questions related to the Replit Migrator app.
+            The features include:
+                - downloading all Replit files from the web through Selenium
+                - generating reports based on project and file data
+                - the option to interact with an AI chatbot (you)
+                - searching for projects and files by name, date, or content
+            Politely refuse to answer questions that are not related to the app.
+            '''
         response = self.client.chat.completions.create(
             model='gpt-3.5-turbo', 
-            messages=[
-                {'role': 'user', 'content': user_message}
-            ],
-            max_tokens=100
+            messages=[{'role': 'system', 'content': system_prompt}] + self.chat_history
         )
 
         return response.choices[0].message.content
+
+
+    def clear_chat(self):
+        self.chatbox.delete(1.0, tk.END)
+        self.chat_history = []
+        self.data_handler.write_chat_history(self.chat_history)
