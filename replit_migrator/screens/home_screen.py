@@ -1,9 +1,19 @@
 import tkinter as tk
+from tkinter import messagebox
 
 class HomeScreen:
-    def __init__(self, root, change_screen):
+    def __init__(self, root, change_screen, data_handler):
         self.root = root
         self.change_screen = change_screen
+        self.data_handler = data_handler
+
+        # Check if user is logged in.
+        self.is_logged_in = self.data_handler.check_if_logged_in()
+        # If user is logged in, get their login details.
+        if self.is_logged_in:
+            self.login_details = self.data_handler.read_login_details()
+        else:
+            self.login_details = None
 
         self.create_gui()
 
@@ -29,3 +39,28 @@ class HomeScreen:
         self.report_button.pack()
         self.chat_button = tk.Button(self.frame, text="Chat", command=lambda: self.change_screen('chat'))
         self.chat_button.pack()
+
+        # Check if user is logged in.
+        if self.login_details is not None:
+            # User is logged in. Create logout button.
+            self.logout_button = tk.Button(self.frame, text="Logout", command=self.logout)
+            self.logout_button.pack()
+        else:
+            # Create login/register button.
+            self.login_button = tk.Button(self.frame, text="Login/Register", command=lambda: self.change_screen('login'))
+            self.login_button.pack()
+
+
+    def logout(self):
+        """
+        Logs the user out of their Replit Migrator account.
+        """
+
+        # Delete login details from local database.
+        self.data_handler.delete_login_details()
+
+        # Notify user that they have been logged out.
+        messagebox.showinfo('Logged Out', 'You have been logged out. Your data is no longer synced to cloud.')
+
+        # Refresh screen to update widgets.
+        self.change_screen('home')

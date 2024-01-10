@@ -3,3 +3,4 @@ matplotlib
 reportlab
 openai
 tkcalendar
+requests

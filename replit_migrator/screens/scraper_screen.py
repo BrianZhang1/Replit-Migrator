@@ -25,10 +25,11 @@ class ScraperScreen:
         self.output_path = os.path.join(os.getcwd(), 'output/')
 
         # List of configuration files/directories/file extensions to ignore during scraping.
-        # Populated by self.read_ignore_file() which is called when scraping begins.
         self.replit_ignore_dirs = []
         self.replit_ignore_files = []
         self.replit_ignore_extensions = []
+        # Read files to ignore from replit_ignore.txt
+        self.read_ignore_file()
 
         self.create_gui()
 
@@ -112,9 +113,6 @@ class ScraperScreen:
 
         # Update status to indicate download has begun.
         self.status_scrolledtext.insert(tk.END, 'Repl migration initiated.\n')
-
-        # Read files to ignore from replit_ignore.txt
-        self.read_ignore_file()
 
         # Get input field values.
         self.status_scrolledtext.insert(tk.END, 'Retrieving login credentials from input fields...\n')

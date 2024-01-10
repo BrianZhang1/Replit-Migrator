@@ -7,6 +7,7 @@ from replit_migrator.screens.search_screen import SearchScreen
 from replit_migrator.screens.report_screen import ReportScreen
 from replit_migrator.screens.chat_screen import ChatScreen
 from replit_migrator.screens.download_existing_screen import DownloadExistingScreen
+from replit_migrator.screens.login_screen import LoginScreen
 
 
 class AppHandler:
@@ -16,14 +17,25 @@ class AppHandler:
         self.root = tk.Tk()
         self.root.title('Replit Repl.it Downloader')
 
+        # Create constant variable for the Replit Migrator Database API endpoint.
+        self.API_ROOT_URL = 'https://brianz1alt2.pythonanywhere.com/'
+
+        # Initialize data handler.
+        self.data_handler = DatabaseHandler('replit_migrator/db.sqlite3', self.API_ROOT_URL)
+
+        # Initalize core attributes.
+        self.selected_project_id = None
+
+        # Upon app startup, check if user is logged in.
+        if self.data_handler.check_if_logged_in():
+            # User is logged in. Get their login details.
+            login_details = self.data_handler.read_login_details()
+            # Update local database to latest version from server.
+            self.data_handler.download_database_from_server(login_details['username'], login_details['password'])
+
         # Initialize screen to home page.
         self.screen = None
         self.change_screen('home')
-
-        # Initialize data handler.
-        self.data_handler = DatabaseHandler('replit_migrator/db.sqlite3')
-
-        self.selected_project_id = None
 
         # Start the tkinter main loop.
         self.root.mainloop()
@@ -41,7 +53,7 @@ class AppHandler:
 
         # Change self.screen to the target screen.
         if screen == 'home':
-            self.screen = HomeScreen(self.root, self.change_screen)
+            self.screen = HomeScreen(self.root, self.change_screen, self.data_handler)
         elif screen == 'scraper':
             if self.selected_project_id is None:
                 self.screen = ScraperScreen(self.root, self.data_handler)
@@ -55,6 +67,8 @@ class AppHandler:
             self.screen = ReportScreen(self.root, self.data_handler)
         elif screen == 'chat':
             self.screen = ChatScreen(self.root, self.data_handler)
+        elif screen == 'login':
+            self.screen = LoginScreen(self.root, self.data_handler, self.change_screen, self.API_ROOT_URL)
         else:
             # Exit function with error message.
             print('Target screen not found.')
