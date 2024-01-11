@@ -278,6 +278,9 @@ class DatabaseHandler:
         if len(data) == 0:
             return
 
+        # Get current login details so they can be restored after database is cleared.
+        login_details = self.read_login_details()
+
         # Get list of all tables in existing database.
         self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
 
@@ -295,6 +298,10 @@ class DatabaseHandler:
 
         # Add chat history data to database.
         self.write_chat_history(data['chat_history'])
+
+        # Restore login details.
+        if login_details is not None:
+            self.write_login_details(login_details['username'], login_details['password'])
 
         # Commit changes to database.
         self.conn.commit()

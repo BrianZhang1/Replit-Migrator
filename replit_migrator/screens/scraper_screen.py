@@ -16,8 +16,9 @@ import shutil
 import threading
 
 class ScraperScreen:
-    def __init__(self, root, data_handler, selected_project_id=None):
+    def __init__(self, root, change_screen, data_handler, selected_project_id=None):
         self.root = root
+        self.change_screen = change_screen
         self.data_handler = data_handler
         self.selected_project_id = selected_project_id
 
@@ -53,44 +54,63 @@ class ScraperScreen:
         """Creates Tkinter GUI."""
 
         # Create frame that wraps this screen.
-        self.frame = tk.Frame(self.root)
+        self.frame = ttk.Frame(self.root)
 
-        # Create label and entry for username, email, and password.
-        username_label = tk.Label(self.frame, text='Replit Username:')
-        username_var = tk.StringVar()
-        self.username_entry = tk.Entry(self.frame, textvariable=username_var)
-        email_label = tk.Label(self.frame, text='Email:')
-        email_var = tk.StringVar()
-        self.email_entry = tk.Entry(self.frame, textvariable=email_var)
-        password_label = tk.Label(self.frame, text='Password:')
-        password_var = tk.StringVar()
-        self.password_entry = tk.Entry(self.frame, textvariable=password_var, show='*')
+        # Create title label.
+        self.title_label = ttk.Label(self.frame, text='Migration Screen', style='Header1.TLabel')
+        self.title_label.pack()
+
+        # Create frame to hold all user-input related widgets.
+        self.input_frame = ttk.Frame(self.frame, style='Debug.TFrame')
+        self.input_frame.pack()
+
+        # Create frame, label, and entry for username.
+        self.username_frame = ttk.Frame(self.input_frame)
+        self.username_frame.pack(pady=5, anchor='w', fill=tk.BOTH, expand=True)
+        self.username_label = ttk.Label(self.username_frame, text='Replit Username:')
+        self.username_label.pack(side='left', anchor='w', padx=(0, 20))
+        self.username_entry = ttk.Entry(self.username_frame)
+        self.username_entry.pack(side='right', anchor='w')
+
+        # Create frame, label, and entry for email.
+        self.email_frame = ttk.Frame(self.input_frame)
+        self.email_frame.pack(pady=5, anchor='w', fill='x')
+        self.email_label = ttk.Label(self.email_frame, text='Email:')
+        self.email_label.pack(side='left')
+        self.email_entry = ttk.Entry(self.email_frame)
+        self.email_entry.pack(side='right')
+
+        # Create frame, label, and entry for password.
+        self.password_frame = ttk.Frame(self.input_frame)
+        self.password_frame.pack(pady=5, anchor='w', fill='x')
+        self.password_label = ttk.Label(self.password_frame, text='Password:')
+        self.password_label.pack(side='left')
+        self.password_entry = ttk.Entry(self.password_frame, show='*')
+        self.password_entry.pack(side='right')
 
         # Create download button to initiate migration.
-        download_button = tk.Button(self.frame, text='Download Repl.its', command=self.begin_downloading_repls)
+        self.download_button = ttk.Button(self.frame, text='Download Repl.its', command=self.begin_downloading_repls)
+        self.download_button.pack(pady=10)
 
         # Create status scrolledtext.
-        self.status_label = tk.Label(self.frame, text='Migration Status')
-        self.status_scrolledtext = scrolledtext.ScrolledText(self.frame, height=10, width=80)
-        self.status_scrolledtext.insert(tk.END, 'Status updates will appear here once migration has begun.\n')
         self.status_checkbox = ttk.Checkbutton(self.frame, text='Show status updates', command=self.toggle_status_updates, state='selected')
         self.status_checkbox.state(['selected'])
+        self.status_checkbox.pack(pady=(30, 0))
+        self.status_scrolledtext = scrolledtext.ScrolledText(self.frame, height=10, width=80)
+        self.status_scrolledtext.insert(tk.END, 'Status updates will appear here once migration has begun.\n')
+        self.status_scrolledtext.configure(state='disabled')
+        self.status_scrolledtext.pack()
 
-        # Grid layout widgets.
-        username_label.grid(row=0, column=0, padx=10, pady=5, sticky='e')
-        self.username_entry.grid(row=0, column=1, padx=10, pady=5, sticky='w')
-        email_label.grid(row=1, column=0, padx=10, pady=5, sticky='e')
-        self.email_entry.grid(row=1, column=1, padx=10, pady=5, sticky='w')
-        password_label.grid(row=2, column=0, padx=10, pady=5, sticky='e')
-        self.password_entry.grid(row=2, column=1, padx=10, pady=5, sticky='w')
-        download_button.grid(row=3, columnspan=2, pady=10)
-        self.status_label.grid(row=4, columnspan=2, pady=(10, 0))
-        self.status_checkbox.grid(row=5, columnspan=2)
-        self.status_scrolledtext.grid(row=6, columnspan=2, padx=10, pady=5)
+        # Create back button.
+        self.back_button = ttk.Button(self.frame, text="Back", command=lambda: self.change_screen('home'))
+        self.back_button.place(x=30, y=510)
 
 
     def begin_downloading_repls(self):
         """Initiates repl downloading process."""
+
+        # Enable status scrolledtext to show updates.
+        self.status_scrolledtext.configure(state='normal')
 
         # Create output folder (where files are downloaded to).
         self.status_scrolledtext.insert(tk.END, 'Creating output directory...\n')
@@ -424,9 +444,9 @@ class ScraperScreen:
         """Toggles visibility of the status updates scrolledtext"""
 
         if self.status_checkbox.instate(['selected']):
-            self.status_scrolledtext.grid()
+            self.status_scrolledtext.pack()
         else:
-            self.status_scrolledtext.grid_remove()
+            self.status_scrolledtext.pack_forget()
 
 
     def download_existing_scan(self):

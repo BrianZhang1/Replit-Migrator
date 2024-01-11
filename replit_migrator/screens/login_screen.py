@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 from tkinter import messagebox
 import requests
 import json
@@ -10,7 +11,7 @@ class LoginScreen:
     """
 
 
-    def __init__(self, root, data_handler, change_screen, API_ROOT_URL):
+    def __init__(self, root, change_screen, data_handler, API_ROOT_URL):
         """Initialize the login screen."""
 
         # Initialize attributes from parameters.
@@ -29,31 +30,39 @@ class LoginScreen:
         """Creates Tkinter GUI."""
 
         # Create frame that wraps this screen.
-        self.frame = tk.Frame(self.root)
+        self.frame = ttk.Frame(self.root)
 
-        # Create screen title.
-        self.title_label = tk.Label(self.frame, text='Login or Register')
+        # Create title label.
+        self.title_label = ttk.Label(self.frame, text='Login or Register', style='Header1.TLabel')
         self.title_label.pack()
 
-        # Create username label and entry.
-        self.username_label = tk.Label(self.frame, text='Username:')
-        self.username_label.pack()
-        self.username_entry = tk.Entry(self.frame)
-        self.username_entry.pack()
+        # Create username frame, label, and entry.
+        self.username_frame = ttk.Frame(self.frame)
+        self.username_frame.pack(pady=(self.root.winfo_reqheight()/2-150, 10))
+        self.username_label = ttk.Label(self.username_frame, text='Username:')
+        self.username_label.pack(side='left', padx=(0, 10))
+        self.username_entry = ttk.Entry(self.username_frame)
+        self.username_entry.pack(side='right')
 
         # Create password label and entry.
-        self.password_label = tk.Label(self.frame, text='Password:')
-        self.password_label.pack()
-        self.password_entry = tk.Entry(self.frame, show='*')
-        self.password_entry.pack()
+        self.password_frame = ttk.Frame(self.frame)
+        self.password_frame.pack()
+        self.password_label = ttk.Label(self.password_frame, text='Password:')
+        self.password_label.pack(side='left', padx=(0, 10))
+        self.password_entry = ttk.Entry(self.password_frame, show='*')
+        self.password_entry.pack(side='right')
 
-        # Create login button.
-        self.login_button = tk.Button(self.frame, text='Login', command=self.login)
-        self.login_button.pack()
+        # Create button frame with login and register buttons.
+        self.button_frame = ttk.Frame(self.frame)
+        self.button_frame.pack(pady=30)
+        self.login_button = ttk.Button(self.button_frame, text='Login', command=self.login)
+        self.login_button.pack(side='left', padx=(0, 20))
+        self.register_button = ttk.Button(self.button_frame, text='Register', command=self.register)
+        self.register_button.pack(side='right')
 
-        # Create register button.
-        self.register_button = tk.Button(self.frame, text='Register', command=self.register)
-        self.register_button.pack()
+        # Create back button.
+        self.back_button = ttk.Button(self.frame, text="Back", command=lambda: self.change_screen('home'))
+        self.back_button.place(x=30, y=510)
 
     
     def login(self):

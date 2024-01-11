@@ -7,8 +7,9 @@ import tkcalendar
 import datetime
 
 class SearchScreen:
-    def __init__(self, root, data_handler):
+    def __init__(self, root, change_screen, data_handler):
         self.root = root
+        self.change_screen = change_screen
         self.data = data_handler.read_projects()
 
         self.create_gui()
@@ -18,51 +19,66 @@ class SearchScreen:
         """Creates Tkinter GUI."""
 
         # Create frame that wraps this screen.
-        self.frame = tk.Frame(self.root)
+        self.frame = ttk.Frame(self.root)
 
-        self.search_details_frame = tk.Frame(self.frame)
-        self.search_label = tk.Label(self.search_details_frame, text='Search')
+        # Create title label.
+        self.title_label = ttk.Label(self.frame, text='Search', style='Header1.TLabel')
+        self.title_label.grid(row=0, column=0)
+
+        self.search_details_frame = ttk.Frame(self.frame)
+        self.search_details_frame.grid(row=1, column=0, pady=(0, 20))
+        self.search_label = ttk.Label(self.search_details_frame, text='Search for')
+        self.search_label.pack(side='left')
         self.search_item_combo = ttk.Combobox(self.search_details_frame, width=12)
         self.search_item_combo['values'] = ('Projects', 'Files')
         self.search_item_combo.current(0)
         self.search_item_combo.bind('<<ComboboxSelected>>', self.update_search_item)
-        self.search_by_label = tk.Label(self.search_details_frame, text='by')
+        self.search_item_combo.pack(side='left', padx=5)
+        self.search_by_label = ttk.Label(self.search_details_frame, text='by')
+        self.search_by_label.pack(side='left')
         self.search_type_combo = ttk.Combobox(self.search_details_frame, width=15)
         self.search_type_combo.bind('<<ComboboxSelected>>', self.update_search_type)
+        self.search_type_combo.pack(side='left', padx=(5, 0))
 
-        self.search_entry_frame = tk.Frame(self.frame)
-        self.search_entry = tk.Entry(self.search_entry_frame, width=30)
-        self.search_button = tk.Button(self.search_entry_frame, text="Search", command=self.search)
+        # Create search entry frame, label, and widget.
+        self.search_entry_frame = ttk.Frame(self.frame)
+        self.search_entry_frame.grid(row=2, column=0)
+        self.search_entry_label = ttk.Label(self.search_entry_frame, text='Search Query:')
+        self.search_entry_label.pack(side='left', padx=(0, 10))
+        self.search_entry = ttk.Entry(self.search_entry_frame, width=30)
+        self.search_entry.pack(side='right')
 
         # Calendar labels and widgets.
-        self.search_calendar_frame = tk.Frame(self.frame)
-        self.start_date_label = tk.Label(self.search_calendar_frame, text='Start Date')
-        self.start_date_calendar = tkcalendar.DateEntry(self.search_calendar_frame, width=12)
-        self.end_date_label = tk.Label(self.search_calendar_frame, text='End Date')
-        self.end_date_calendar = tkcalendar.DateEntry(self.search_calendar_frame, width=12)
+        self.search_calendar_frame = ttk.Frame(self.frame)
+        self.start_date_frame = ttk.Frame(self.search_calendar_frame)
+        self.start_date_frame.pack(side='left', padx=(0, 10))
+        self.start_date_label = ttk.Label(self.start_date_frame, text='Start Date')
+        self.start_date_label.pack()
+        self.start_date_calendar = tkcalendar.DateEntry(self.start_date_frame, width=12)
+        self.start_date_calendar.pack()
+        self.end_date_frame = ttk.Frame(self.search_calendar_frame)
+        self.end_date_frame.pack(side='right')
+        self.end_date_label = ttk.Label(self.end_date_frame, text='End Date')
+        self.end_date_label.pack()
+        self.end_date_calendar = tkcalendar.DateEntry(self.end_date_frame, width=12)
+        self.end_date_calendar.pack()
+
+        self.search_button = ttk.Button(self.frame, text="Search", command=self.search)
+        self.search_button.grid(row=3, column=0, pady=(10, 20))
 
         # ScrolledText widget to display the results
-        self.result_text = scrolledtext.ScrolledText(self.frame, width=80, height=20)
+        self.result_text = scrolledtext.ScrolledText(self.frame, width=80, height=15)
+        self.result_text.grid(row=4, column=0)
 
-        # Place all widgets.
-        self.search_details_frame.grid(row=0, column=0, sticky='w')
-        self.search_entry_frame.grid(row=1, column=0, sticky='w')
-        self.search_calendar_frame.grid(row=2, column=0, sticky='w')
-        self.search_calendar_frame.grid_remove()    # Hide calendar widgets by default.
-        self.result_text.grid(row=3, column=0, sticky='w')
+        # Make grid rows fill screen horizontally.
+        self.frame.columnconfigure(0, weight=1)
 
-        self.search_label.pack(side='left')
-        self.search_item_combo.pack(side='left')
-        self.search_by_label.pack(side='left')
-        self.search_type_combo.pack(side='left')
-        self.search_entry.pack(side='left')
-        self.search_button.pack(side='left')
-        self.start_date_label.grid(row=0, column=0)
-        self.start_date_calendar.grid(row=1, column=0)
-        self.end_date_label.grid(row=0, column=1)
-        self.end_date_calendar.grid(row=1, column=1)
+        # Create back button.
+        self.back_button = ttk.Button(self.frame, text="Back", command=lambda: self.change_screen('home'))
+        self.back_button.place(x=30, y=510)
 
-        self.update_search_item(None)   # Update search type combobox to default value.
+        # Update search type combobox to default value.
+        self.update_search_item(None)   
         self.search_type_combo.current(0)
 
 
@@ -85,11 +101,15 @@ class SearchScreen:
 
         search_type = self.search_type_combo.get()
         if search_type == 'Last Modified Date':
+            # Hide search entry.
+            self.search_entry_frame.grid_remove()
             # Show calendar widgets.
-            self.search_calendar_frame.grid()
+            self.search_calendar_frame.grid(row=2, column=0)
         else:
             # Hide calendar widgets.
             self.search_calendar_frame.grid_remove()
+            # Show search entry.
+            self.search_entry_frame.grid()
 
 
     def search(self):

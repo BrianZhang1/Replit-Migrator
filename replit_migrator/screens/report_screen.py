@@ -7,8 +7,9 @@ import matplotlib.pyplot as plt
 import os
 
 class ReportScreen:
-    def __init__(self, root, data_handler):
+    def __init__(self, root, change_screen, data_handler):
         self.root = root
+        self.change_screen = change_screen
         self.data = data_handler.read_projects()
 
         self.pdf_canvas = None  # Canvas for PDF document, initialized when needed.
@@ -27,12 +28,17 @@ class ReportScreen:
         """Creates Tkinter GUI."""
 
         # Create frame that wraps this screen.
-        self.frame = tk.Frame(self.root)
+        self.frame = ttk.Frame(self.root)
 
         # Create title label.
-        self.title_label = tk.Label(self.frame, text="Report Generator", font=("Helvetica", 20))
-        self.title_label.pack(pady=20)
+        self.title_label = ttk.Label(self.frame, text='Report Generator', style='Header1.TLabel')
+        self.title_label.pack()
 
+        # Create instructions label.
+        self.instructions_label = ttk.Label(self.frame, text='Unselect the options you would like to exclude from the report.')
+        self.instructions_label.pack(pady=(self.root.winfo_reqheight()/2-150, 10))
+
+        # Create checkboxes for each report option.
         self.option_widgets = {}
         for option in self.report_options:
             option_enabled = self.report_options[option]
@@ -43,8 +49,12 @@ class ReportScreen:
             self.option_widgets[option] = option_checkbox
 
         # Create button to generate report.
-        self.generate_button = tk.Button(self.frame, text="Generate Report", command=self.generate_report)
-        self.generate_button.pack()
+        self.generate_button = ttk.Button(self.frame, text="Generate Report", command=self.generate_report)
+        self.generate_button.pack(pady=20)
+
+        # Create back button.
+        self.back_button = ttk.Button(self.frame, text="Back", command=lambda: self.change_screen('home'))
+        self.back_button.place(x=30, y=510)
 
 
     def update_option(self, option):
@@ -73,9 +83,10 @@ class ReportScreen:
             self.draw_text(f'Total projects: {len(self.data)}')
             self.draw_text(f'Total files: {file_count}')
             self.draw_text(f'Total lines of code: {total_lines}')
-            self.draw_text(f'Total size: {total_size} MiB')
+            self.draw_text(f'Total size: {round(total_size, 2)} MiB')
             self.draw_text('', font_size=0, line_spacing=10)
         if self.report_options['Average Metrics']:
+            self.draw_text(f'Average files per project: {round(len(self.data)/file_count, 2)}')
             self.draw_text(f'Average lines per file: {round(total_lines/file_count, 2)}')
             self.draw_text(f'Average size per file: {round(total_size/file_count, 2)} MiB')
             self.draw_text('', font_size=0, line_spacing=10)

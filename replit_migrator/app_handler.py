@@ -1,6 +1,8 @@
 import tkinter as tk
+from tkinter import ttk
 
 from replit_migrator.database_handler import DatabaseHandler
+from replit_migrator.style_handler import StyleHandler
 from replit_migrator.screens.scraper_screen import ScraperScreen
 from replit_migrator.screens.home_screen import HomeScreen
 from replit_migrator.screens.search_screen import SearchScreen
@@ -15,7 +17,11 @@ class AppHandler:
 
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title('Replit Repl.it Downloader')
+        self.root.title('Repl.it Migrator')
+        self.root.geometry('1024x576')
+        self.root.resizable(False, False)
+        self.root.configure(bg='white')
+        self.root.iconbitmap('replit_migrator/icon.ico')
 
         # Create constant variable for the Replit Migrator Database API endpoint.
         self.API_ROOT_URL = 'https://brianz1alt2.pythonanywhere.com/'
@@ -32,6 +38,10 @@ class AppHandler:
             login_details = self.data_handler.read_login_details()
             # Update local database to latest version from server.
             self.data_handler.download_database_from_server(login_details['username'], login_details['password'])
+
+        # Create consistent styles for all widgets.
+        self.style_handler = StyleHandler()
+        self.style_handler.create_styles()
 
         # Initialize screen to home page.
         self.screen = None
@@ -56,26 +66,26 @@ class AppHandler:
             self.screen = HomeScreen(self.root, self.change_screen, self.data_handler)
         elif screen == 'scraper':
             if self.selected_project_id is None:
-                self.screen = ScraperScreen(self.root, self.data_handler)
+                self.screen = ScraperScreen(self.root, self.change_screen, self.data_handler)
             else:
-                self.screen = ScraperScreen(self.root, self.data_handler, self.selected_project_id)
+                self.screen = ScraperScreen(self.root, self.change_screen, self.data_handler, self.selected_project_id)
         elif screen == 'download_existing':
             self.screen = DownloadExistingScreen(self.root, self.change_screen, self.data_handler, self.select_project)
         elif screen == 'search':
-            self.screen = SearchScreen(self.root, self.data_handler)
+            self.screen = SearchScreen(self.root, self.change_screen, self.data_handler)
         elif screen == 'report':
-            self.screen = ReportScreen(self.root, self.data_handler)
+            self.screen = ReportScreen(self.root, self.change_screen, self.data_handler)
         elif screen == 'chat':
-            self.screen = ChatScreen(self.root, self.data_handler)
+            self.screen = ChatScreen(self.root, self.change_screen, self.data_handler)
         elif screen == 'login':
-            self.screen = LoginScreen(self.root, self.data_handler, self.change_screen, self.API_ROOT_URL)
+            self.screen = LoginScreen(self.root, self.change_screen, self.data_handler, self.API_ROOT_URL)
         else:
             # Exit function with error message.
             print('Target screen not found.')
             return
 
         # Add new screen to display.
-        self.screen.frame.pack()
+        self.screen.frame.pack(fill=tk.BOTH, expand=True)
 
 
     def select_project(self, project_id):
@@ -83,3 +93,4 @@ class AppHandler:
 
         self.selected_project_id = project_id
         self.change_screen('scraper')
+

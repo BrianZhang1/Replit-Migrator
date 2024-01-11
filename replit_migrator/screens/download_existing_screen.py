@@ -15,17 +15,25 @@ class DownloadExistingScreen:
         """Creates Tkinter GUI."""
 
         # Create frame that wraps this screen.
-        self.frame = tk.Frame(self.root)
+        self.frame = ttk.Frame(self.root)
 
-        self.instructions_label = tk.Label(self.frame, text='Select the scan you would like to download from, then press Continue.')
-        self.instructions_label.pack()
+        # Create title label.
+        self.title_label = ttk.Label(self.frame, text='Download Existing Scan', style='Header1.TLabel')
+        self.title_label.pack()
+
+        self.instructions_label = ttk.Label(self.frame, text='Select the scan you would like to download from, then press Continue.')
+        self.instructions_label.pack(pady=(self.root.winfo_reqheight()/2-150, 10))
 
         self.selection_combo = ttk.Combobox(self.frame, width=24)
         self.selection_combo['values'] = [f'{row['id']} - {row['date_time']}' for row in self.data_handler.get_migration_tables()]
-        self.selection_combo.pack()
+        self.selection_combo.pack(pady=10)
 
-        self.continue_button = tk.Button(self.frame, text='Continue', command=self.continue_to_download)
-        self.continue_button.pack()
+        self.continue_button = ttk.Button(self.frame, text='Continue', command=self.continue_to_download)
+        self.continue_button.pack(pady=10)
+
+        # Create back button.
+        self.back_button = ttk.Button(self.frame, text="Back", command=lambda: self.change_screen('home'))
+        self.back_button.place(x=30, y=510)
 
 
     def continue_to_download(self):
