@@ -3,17 +3,17 @@ from tkinter import ttk
 
 class StyleHandler:
     """
-    Handles the creation of consistent styles for all widgets.
+    Handles the creation of consistent styles for all widgets using ttk.
     """
 
     def create_styles(self):
-        '''
+        """
         Creates consistent project-wide styles to be used by all widgets.
 
         Tkinter styles are analogous to CSS classes in web development. They are a
         set of styling options that can be applied to any widget, reducing repetitive
         code.
-        '''
+        """
 
         # Create style object.
         self.style = ttk.Style()

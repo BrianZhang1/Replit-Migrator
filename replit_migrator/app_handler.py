@@ -1,6 +1,6 @@
 import tkinter as tk
-from tkinter import ttk
 
+# Import all screens.
 from replit_migrator.database_handler import DatabaseHandler
 from replit_migrator.style_handler import StyleHandler
 from replit_migrator.screens.scraper_screen import ScraperScreen
@@ -13,9 +13,16 @@ from replit_migrator.screens.login_screen import LoginScreen
 
 
 class AppHandler:
-    """Manages the application on the highest level."""
+    """
+    Manages the application on the highest level.
+    """
 
     def __init__(self):
+        """
+        Starts the application.
+        """
+
+        # Create and configure the root window.
         self.root = tk.Tk()
         self.root.title('Repl.it Migrator')
         self.root.geometry('1024x576')
@@ -29,7 +36,7 @@ class AppHandler:
         # Initialize data handler.
         self.data_handler = DatabaseHandler('replit_migrator/db.sqlite3', self.API_ROOT_URL)
 
-        # Initalize core attributes.
+        # Create variable to persist selected project ID when changing screens.
         self.selected_project_id = None
 
         # Upon app startup, check if user is logged in.
@@ -47,12 +54,14 @@ class AppHandler:
         self.screen = None
         self.change_screen('home')
 
-        # Start the tkinter main loop.
+        # Start the Tkinter main loop.
         self.root.mainloop()
 
 
     def change_screen(self, screen):
-        """Handles changing between screens."""
+        """
+        Handles changing between screens.
+        """
 
         # Remove existing screen from display.
         if self.screen is not None:
@@ -61,14 +70,11 @@ class AppHandler:
             except tk.TclError:
                 self.screen.frame.grid_forget()
 
-        # Change self.screen to the target screen.
+        # Change self.screen to the new screen object.
         if screen == 'home':
             self.screen = HomeScreen(self.root, self.change_screen, self.data_handler)
         elif screen == 'scraper':
-            if self.selected_project_id is None:
-                self.screen = ScraperScreen(self.root, self.change_screen, self.data_handler)
-            else:
-                self.screen = ScraperScreen(self.root, self.change_screen, self.data_handler, self.selected_project_id)
+            self.screen = ScraperScreen(self.root, self.change_screen, self.data_handler, self.selected_project_id)
         elif screen == 'download_existing':
             self.screen = DownloadExistingScreen(self.root, self.change_screen, self.data_handler, self.select_project)
         elif screen == 'search':
@@ -84,12 +90,14 @@ class AppHandler:
             print('Target screen not found.')
             return
 
-        # Add new screen to display.
+        # Display the new screen.
         self.screen.frame.pack(fill=tk.BOTH, expand=True)
 
 
     def select_project(self, project_id):
-        """Selects a project to scrape."""
+        """
+        Selects a project to scrape.
+        """
 
         self.selected_project_id = project_id
         self.change_screen('scraper')

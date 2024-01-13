@@ -1,39 +1,47 @@
-import tkinter as tk
 from tkinter import ttk
 
-class DownloadExistingScreen:
+from .screen_superclass import Screen
+
+
+class DownloadExistingScreen(Screen):
+    """
+    The screen which allows users to directly download existing Repl.it scans.
+    """
+
+
     def __init__(self, root, change_screen, data_handler, select_project):
-        self.root = root
-        self.change_screen = change_screen
-        self.data_handler = data_handler
+        # Call superclass constructor to initalize core functionality.
+        super().__init__(root, change_screen, data_handler)
+
         self.select_project = select_project
 
         self.create_gui()
 
 
     def create_gui(self):
-        """Creates Tkinter GUI."""
+        """
+        Create the Tkinter GUI to be displayed by the app handler.
+        """
 
-        # Create frame that wraps this screen.
-        self.frame = ttk.Frame(self.root)
+        # Create essential widgets by calling superclass method.
+        super().create_gui()
 
         # Create title label.
         self.title_label = ttk.Label(self.frame, text='Download Existing Scan', style='Header1.TLabel')
         self.title_label.pack()
 
+        # Create instructions label.
         self.instructions_label = ttk.Label(self.frame, text='Select the scan you would like to download from, then press Continue.')
         self.instructions_label.pack(pady=(self.root.winfo_reqheight()/2-150, 10))
 
-        self.selection_combo = ttk.Combobox(self.frame, width=24)
-        self.selection_combo['values'] = [f'{row['id']} - {row['date_time']}' for row in self.data_handler.get_migration_tables()]
+        # Create selection combo box widget to allow user to select previous migration.
+        selection_combo_values = [f'{row['id']} - {row['date_time']}' for row in self.data_handler.get_migration_tables()]
+        self.selection_combo = ttk.Combobox(self.frame, width=24, state='readonly', values=selection_combo_values)
         self.selection_combo.pack(pady=10)
 
+        # Create continue button.
         self.continue_button = ttk.Button(self.frame, text='Continue', command=self.continue_to_download)
         self.continue_button.pack(pady=10)
-
-        # Create back button.
-        self.back_button = ttk.Button(self.frame, text="Back", command=lambda: self.change_screen('home'))
-        self.back_button.place(x=30, y=510)
 
 
     def continue_to_download(self):

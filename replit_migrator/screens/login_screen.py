@@ -4,39 +4,38 @@ from tkinter import messagebox
 import requests
 import json
 
+from .screen_superclass import Screen
 
-class LoginScreen:
+
+class LoginScreen(Screen):
     """
     Login screen for the user to login to their Replit Migrator account.
     """
 
 
     def __init__(self, root, change_screen, data_handler, API_ROOT_URL):
-        """Initialize the login screen."""
+        # Call superclass constructor to initalize core functionality.
+        super().__init__(root, change_screen, data_handler)
 
-        # Initialize attributes from parameters.
-        self.root = root
-        self.data_handler = data_handler
         self.API_ROOT_URL = API_ROOT_URL
-
-        # Initalize methods from parameters.
-        self.change_screen = change_screen
 
         # Create GUI.
         self.create_gui()
     
 
     def create_gui(self):
-        """Creates Tkinter GUI."""
+        """
+        Create the Tkinter GUI to be displayed by the app handler.
+        """
 
-        # Create frame that wraps this screen.
-        self.frame = ttk.Frame(self.root)
+        # Create essential widgets by calling superclass method.
+        super().create_gui()
 
         # Create title label.
         self.title_label = ttk.Label(self.frame, text='Login or Register', style='Header1.TLabel')
         self.title_label.pack()
 
-        # Create username frame, label, and entry.
+        # Create widgets to allow username input.
         self.username_frame = ttk.Frame(self.frame)
         self.username_frame.pack(pady=(self.root.winfo_reqheight()/2-150, 10))
         self.username_label = ttk.Label(self.username_frame, text='Username:')
@@ -44,7 +43,7 @@ class LoginScreen:
         self.username_entry = ttk.Entry(self.username_frame)
         self.username_entry.pack(side='right')
 
-        # Create password label and entry.
+        # Create widgets to allow password input.
         self.password_frame = ttk.Frame(self.frame)
         self.password_frame.pack()
         self.password_label = ttk.Label(self.password_frame, text='Password:')
@@ -52,17 +51,13 @@ class LoginScreen:
         self.password_entry = ttk.Entry(self.password_frame, show='*')
         self.password_entry.pack(side='right')
 
-        # Create button frame with login and register buttons.
+        # Create login and register buttons.
         self.button_frame = ttk.Frame(self.frame)
         self.button_frame.pack(pady=30)
         self.login_button = ttk.Button(self.button_frame, text='Login', command=self.login)
         self.login_button.pack(side='left', padx=(0, 20))
         self.register_button = ttk.Button(self.button_frame, text='Register', command=self.register)
         self.register_button.pack(side='right')
-
-        # Create back button.
-        self.back_button = ttk.Button(self.frame, text="Back", command=lambda: self.change_screen('home'))
-        self.back_button.place(x=30, y=510)
 
     
     def login(self):

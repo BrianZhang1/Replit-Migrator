@@ -2,42 +2,41 @@ import sqlite3
 import requests
 import json
 
+
 class DatabaseHandler:
     """
-    A class that handles data operations for projects.
-
-    Attributes:
-        db_path (str): The path to the SQLite database file.
-        conn (sqlite3.Connection): The connection to the database.
-        cursor (sqlite3.Cursor): The cursor for executing SQL statements.
+    Handles all operations related to data, including read/write to both local
+    and server database.
     """
 
 
-    def __init__(self, db_path, API_ROOT_URL):
-        """
-        Initializes a new instance of the DataHandler class.
-
-        Args:
-            db_path (str): The path to the SQLite database file.
-        """
-        self.db_path = db_path
+    def __init__(self, DB_PATH, API_ROOT_URL):
+        # Initialize core attributes from parameters.
+        self.DB_PATH = DB_PATH
         self.API_ROOT_URL = API_ROOT_URL
 
-        self.conn = sqlite3.connect(db_path)
+        # Initialize database connection and cursor.
+        self.conn = sqlite3.connect(DB_PATH)
         self.cursor = self.conn.cursor()
+
+        # Create database tables if they don't exist.
         self.create_tables()
 
 
     def create_tables(self):
         """
-        Creates the projects and chat_history tables if they doesn't exist.
+        Create database tables essential to program function.
         """
+
+        # Create migrations table (contains migration history).
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS migrations (
                 id INTEGER PRIMARY KEY,
                 date_time TEXT
             );
         ''')
+
+        # Create chat_history table (contains chat history with chat bot).
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS chat_history (
                 id INTEGER PRIMARY KEY,
@@ -45,7 +44,8 @@ class DatabaseHandler:
                 content TEXT
             );
         ''')
-        # Create logindetails table.
+
+        # Create login_details table (contains user login details for Replit Migrator Database Server).
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS login_details (
                 id INTEGER PRIMARY KEY,
@@ -53,12 +53,25 @@ class DatabaseHandler:
                 password TEXT
             );
         ''')
+
+        # Commit changes to database.
         self.conn.commit()
 
 
     def create_migration_table(self, date_time):
+        """
+        Create a table to hold data for all projects, for a single migration.
+
+        Each record in the table contains data for a single Repl project.
+        """
+
+        # Add details of this migration to the migrations table.
         self.cursor.execute('INSERT INTO migrations (date_time) VALUES (?);', (date_time,))
+
+        # Get id of this migration from migrations table.
         id = self.cursor.execute('SELECT last_insert_rowid();').fetchone()[0]
+
+        # Create table for this migration.
         self.cursor.execute(f'''
             CREATE TABLE IF NOT EXISTS projects_{id} (
                 id INTEGER PRIMARY KEY,
@@ -69,6 +82,8 @@ class DatabaseHandler:
                 size TEXT
             );
         ''')
+
+        # Commit changes to database.
         self.conn.commit()
 
 
@@ -77,37 +92,44 @@ class DatabaseHandler:
         Retrieves the details of all entries in the migrations table and returns them as a list,
         where each entry is a dictionary containing the id and date_time of the migration.
         """
+
+        # Get all entries from the migrations table.
         self.cursor.execute('SELECT * FROM migrations;')
         rows = self.cursor.fetchall()
+
+        # Reformat data into a list of dictionaries.
         migrations = []
         for row in rows:
             id, date_time = row
             migrations.append({'id': id, 'date_time': date_time})
+
         return migrations
 
 
     def write_projects(self, projects, table_id=None, login_details=None):
         """
-        Writes project data to the specified projects table.
-        If user is logged in, uploads chat history to the Replit Migrator Database Server.
+        Writes project data to the specified migration table, identified by id.
+        If user is logged in, uploads projects to the Replit Migrator Database Server.
         """
 
+        # If migration table id not specified, use id of the latest migration table created.
         if table_id is None:
-            # If id not specified, use id of the latest migration table created.
             table_id = self.cursor.execute('SELECT id FROM migrations ORDER BY id DESC LIMIT 1;').fetchone()[0]
             
-
+        # Form name of migration table.
         table_name = f'projects_{table_id}'
 
-        # Delete all rows from the projects table.
+        # Delete all rows from the migration table.
         self.cursor.execute(f'DELETE FROM {table_name}')
 
-        # Insert new rows into the projects table.
+        # Insert new rows into the migration table with project data.
         for name, project_data in projects.items():
             self.cursor.execute(f'''
                 INSERT INTO {table_name} (name, path, link, last_modified, size)
                 VALUES (?, ?, ?, ?, ?);
             ''', (name, project_data['path'], project_data['link'], project_data['last_modified'], project_data['size']))
+
+        # Commit changes to database.
         self.conn.commit()
 
         # Check if user is logged in.
@@ -123,18 +145,23 @@ class DatabaseHandler:
         Reads project data from the specified projects table and returns it.
         """
 
+        # If id not specified, use id of the latest migration table created.
         if table_id is None:
-            # If id not specified, use id of the latest migration table created.
             table_id = self.cursor.execute('SELECT id FROM migrations ORDER BY id DESC LIMIT 1;').fetchone()[0]
 
+        # Form name of migration table.
         table_name = f'projects_{table_id}'
 
+        # Get all rows from the migration table.
         self.cursor.execute(f'SELECT * FROM {table_name};')
         rows = self.cursor.fetchall()
+
+        # Reformat data into a dictionary.
         projects = {}
         for row in rows:
             id, name, path, link, last_modified, size = row
             projects[name] = {'path': path, 'link': link, 'last_modified': last_modified, 'size': size}
+
         return projects
 
 
@@ -143,6 +170,7 @@ class DatabaseHandler:
         Writes chat history data to the chat_history table.
         If user is logged in, uploads chat history to the Replit Migrator Database Server.
         """
+
         # Delete all rows from the chat_history table.
         self.cursor.execute('DELETE FROM chat_history')
 
@@ -152,6 +180,8 @@ class DatabaseHandler:
                 INSERT INTO chat_history (role, content)
                 VALUES (?, ?);
             ''', (message['role'], message['content']))
+
+        # Commit changes to database.
         self.conn.commit()
 
         # Check if user is logged in.
@@ -167,12 +197,16 @@ class DatabaseHandler:
         Reads chat history data from the chat_history table.
         """
 
+        # Get all rows from the chat_history table.
         self.cursor.execute('SELECT * FROM chat_history;')
         rows = self.cursor.fetchall()
+
+        # Reformat data into a list of dictionaries.
         chat_history = []
         for row in rows:
             id, role, content = row
             chat_history.append({'role': role, 'content': content})
+
         return chat_history
 
 
@@ -189,6 +223,8 @@ class DatabaseHandler:
             INSERT INTO login_details (username, password)
             VALUES (?, ?);
         ''', (username, password))
+
+        # Commit changes to database.
         self.conn.commit()
     
 
@@ -199,6 +235,8 @@ class DatabaseHandler:
 
         # Delete all rows from the login_details table.
         self.cursor.execute('DELETE FROM login_details')
+
+        # Commit changes to database.
         self.conn.commit()
 
     
@@ -216,17 +254,18 @@ class DatabaseHandler:
             # No login details found. Return None.
             return None
         
-        # Login details found. Return them.
+        # Login details found. Format in to dictionary and return them.
         login_details = {
             'username': rows[0][1],
             'password': rows[0][2]
         }
+
         return login_details
 
 
     def check_if_logged_in(self):
         """
-        Checks if the user is logged in.
+        Checks if the user is logged in, returning True if so and False if not.
         """
 
         # Read login details from the login_details table.
@@ -282,7 +321,7 @@ class DatabaseHandler:
         login_details = self.read_login_details()
 
         # Get list of all tables in existing database.
-        self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        self.cursor.execute('SELECT name FROM sqlite_master WHERE type="table";')
 
         # Delete all tables in existing database.
         for table in self.cursor.fetchall():

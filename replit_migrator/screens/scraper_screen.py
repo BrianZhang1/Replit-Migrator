@@ -1,25 +1,36 @@
-# Contains the ReplitScraper class which downloads all repls from a Replit user's profile.
-
-import time
+# GUI modules
 import tkinter as tk
 from tkinter import ttk
 from tkinter import scrolledtext
 from tkinter import messagebox
+
+# Webscraping modules.
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from urllib.parse import urlparse, urlunparse
+
+# Utility modules.
 import os
+import time
 import zipfile
 import shutil
 import threading
 
-class ScraperScreen:
-    def __init__(self, root, change_screen, data_handler, selected_project_id=None):
-        self.root = root
-        self.change_screen = change_screen
-        self.data_handler = data_handler
+from .screen_superclass import Screen
+
+
+class ScraperScreen(Screen):
+    """
+    The screen which handles downloading all Repls from Repl.it.
+    """
+
+
+    def __init__(self, root, change_screen, data_handler, selected_project_id):
+        # Call superclass constructor to initalize core functionality.
+        super().__init__(root, change_screen, data_handler)
+
         self.selected_project_id = selected_project_id
 
         self.projects = {} # Stores project data (name, path, link).
@@ -51,10 +62,12 @@ class ScraperScreen:
 
 
     def create_gui(self):
-        """Creates Tkinter GUI."""
+        """
+        Create the Tkinter GUI to be displayed by the app handler.
+        """
 
-        # Create frame that wraps this screen.
-        self.frame = ttk.Frame(self.root)
+        # Create essential widgets by calling superclass method.
+        super().create_gui()
 
         # Create title label.
         self.title_label = ttk.Label(self.frame, text='Migration Screen', style='Header1.TLabel')
@@ -64,7 +77,7 @@ class ScraperScreen:
         self.input_frame = ttk.Frame(self.frame, style='Debug.TFrame')
         self.input_frame.pack()
 
-        # Create frame, label, and entry for username.
+        # Create widgets to allow username input.
         self.username_frame = ttk.Frame(self.input_frame)
         self.username_frame.pack(pady=5, anchor='w', fill=tk.BOTH, expand=True)
         self.username_label = ttk.Label(self.username_frame, text='Replit Username:')
@@ -72,7 +85,7 @@ class ScraperScreen:
         self.username_entry = ttk.Entry(self.username_frame)
         self.username_entry.pack(side='right', anchor='w')
 
-        # Create frame, label, and entry for email.
+        # Create widgets to allow email input.
         self.email_frame = ttk.Frame(self.input_frame)
         self.email_frame.pack(pady=5, anchor='w', fill='x')
         self.email_label = ttk.Label(self.email_frame, text='Email:')
@@ -80,7 +93,7 @@ class ScraperScreen:
         self.email_entry = ttk.Entry(self.email_frame)
         self.email_entry.pack(side='right')
 
-        # Create frame, label, and entry for password.
+        # Create widgets to allow password input.
         self.password_frame = ttk.Frame(self.input_frame)
         self.password_frame.pack(pady=5, anchor='w', fill='x')
         self.password_label = ttk.Label(self.password_frame, text='Password:')
@@ -92,28 +105,26 @@ class ScraperScreen:
         self.download_button = ttk.Button(self.frame, text='Download Repl.its', command=self.begin_downloading_repls)
         self.download_button.pack(pady=10)
 
-        # Create status scrolledtext.
+        # Create status text box.
         self.status_checkbox = ttk.Checkbutton(self.frame, text='Show status updates', command=self.toggle_status_updates, state='selected')
         self.status_checkbox.state(['selected'])
         self.status_checkbox.pack(pady=(30, 0))
         self.status_scrolledtext = scrolledtext.ScrolledText(self.frame, height=10, width=80)
-        self.status_scrolledtext.insert(tk.END, 'Status updates will appear here once migration has begun.\n')
+        self.print_status('Status updates will appear here once migration has begun.')
         self.status_scrolledtext.configure(state='disabled')
         self.status_scrolledtext.pack()
 
-        # Create back button.
-        self.back_button = ttk.Button(self.frame, text="Back", command=lambda: self.change_screen('home'))
-        self.back_button.place(x=30, y=510)
-
 
     def begin_downloading_repls(self):
-        """Initiates repl downloading process."""
+        """
+        Initiates repl downloading process.
+        """
 
         # Enable status scrolledtext to show updates.
         self.status_scrolledtext.configure(state='normal')
 
         # Create output folder (where files are downloaded to).
-        self.status_scrolledtext.insert(tk.END, 'Creating output directory...\n')
+        self.print_status('Creating output directory...')
         try:
             os.makedirs(self.output_path)
         except FileExistsError:
@@ -125,17 +136,17 @@ class ScraperScreen:
         # Check if a project has been selected from the download existing screen.
         if self.selected_project_id is not None:
             # Notify user that existing scan is being downloaded.
-            self.status_scrolledtext.insert(tk.END, 'Downloading existing scan. The download will proceed silently.\n')
+            self.print_status('Downloading existing scan. The download will proceed silently.')
 
             # Download existing scan instead of proceeding with new migration.
             self.download_existing_scan()
             return
 
         # Update status to indicate download has begun.
-        self.status_scrolledtext.insert(tk.END, 'Repl migration initiated.\n')
+        self.print_status('Repl migration initiated.')
 
         # Get input field values.
-        self.status_scrolledtext.insert(tk.END, 'Retrieving login credentials from input fields...\n')
+        self.print_status('Retrieving login credentials from input fields...')
         username = self.username_entry.get()
         email = self.email_entry.get()
         password = self.password_entry.get()
@@ -146,7 +157,7 @@ class ScraperScreen:
             return
 
         # Execute webdriver in a separate thread to prevent GUI from freezing.
-        self.status_scrolledtext.insert(tk.END, 'Creating thread to execute browser emulator...\n')
+        self.print_status('Creating thread to execute browser emulator...')
         thread = threading.Thread(target=self.execute_webdriver_thread, args=(username, email, password))
         self.scraping_finished = False
         thread.start()
@@ -159,24 +170,23 @@ class ScraperScreen:
             self.status_scrolledtext.see(tk.END)
 
         # Organize files into folders based on file hierarchy.
-        self.status_scrolledtext.insert(tk.END, 'Organizing files...\n')
-        self.status_scrolledtext.see(tk.END)
+        self.print_status('Organizing files...')
         self.organize_files(self.output_path)
 
         # Write data to database.
-        self.status_scrolledtext.insert(tk.END, 'Updating database...\n')
-        self.status_scrolledtext.see(tk.END)
+        self.print_status('Updating database...')
         self.data_handler.create_migration_table(time.strftime('%Y-%m-%d %H:%M:%S'))
         self.data_handler.write_projects(self.projects)
 
         # Update status to indicate migration has completed.
-        self.status_scrolledtext.insert(tk.END, 'Migration complete.\n')
-        self.status_scrolledtext.see(tk.END)
+        self.print_status('Migration complete.')
         self.status_scrolledtext.configure(state='disabled')
 
 
     def read_ignore_file(self):
-        """Reads files to ignore from replit_ignore.txt."""
+        """
+        Reads files to ignore from replit_ignore.txt.
+        """
 
         with open('replit_ignore.txt', 'r') as file:
             # Tracks the type of item currently being read (directories or files).
@@ -208,26 +218,28 @@ class ScraperScreen:
 
 
     def execute_webdriver_thread(self, username, email, password):
-        """Executes the webdriver in a separate thread to prevent GUI from freezing."""
+        """
+        Executes the webdriver in a separate thread to prevent GUI from freezing.
+        """
 
         # Create webdriver.
-        self.status_scrolledtext.insert(tk.END, 'Creating browser emulator...\n')
+        self.print_status('Creating browser emulator...')
         driver = self.setup_webdriver()
 
         # Login to replit.
-        self.status_scrolledtext.insert(tk.END, 'Logging into Replit...\n')
+        self.print_status('Logging into Replit...')
         self.login_replit(driver, email, password)
-        self.status_scrolledtext.insert(tk.END, 'Login successful.\n')
+        self.print_status('Login successful.')
 
         # Start the recursive repl downloading process.
-        self.status_scrolledtext.insert(tk.END, 'Beginning download process...\n')
+        self.print_status('Beginning download process...')
         downloaded_folders = set()      # Stores the names of folders that have already been downloaded.
         self.download_repls_recursive(driver, username, f'https://replit.com/@{username}', downloaded_folders)
-        self.status_scrolledtext.insert(tk.END, 'Download process complete.\n')
+        self.print_status('Download process complete.')
 
         # Scanning is complete. Notify user and clean up resources.
         messagebox.showinfo('Scan Complete', 'The scan is complete, however, the downloads may still be in progress. Please ensure the downloads are finished before clicking OK.')
-        self.status_scrolledtext.insert(tk.END, 'Exiting browser emulator...\n')
+        self.print_status('Exiting browser emulator...')
         driver.quit()
 
         # Notify main thread that scraping is complete.
@@ -235,7 +247,9 @@ class ScraperScreen:
 
 
     def login_replit(self, driver, email, password):
-        """Uses existing driver to log into replit."""
+        """
+        Uses existing driver to log into replit.
+        """
 
         # Navigate to login page.
         driver.get('https://replit.com/login')
@@ -255,7 +269,9 @@ class ScraperScreen:
 
 
     def setup_webdriver(self):
-        """Creates the webdriver used to access Replit."""
+        """
+        Creates the webdriver used to access Replit.
+        """
 
         # Setup Selenium WebDriver
         chrome_driver_path = os.environ.get(r'C:\Users\brian\AppData\Local\chromedriver-win64\chromedriver.exe')
@@ -275,13 +291,6 @@ class ScraperScreen:
     def download_repls_recursive(self, driver, username, folder_link, downloaded_folders, path=''):
         """
         Recursively downloads repls inside folder and all subfolders.
-        
-        Args:
-            driver: Selenium webdriver.
-            username: Replit username.
-            folder_link: Link to the folder currently being processed.
-            downloaded_folders: Set of folders that have already been downloaded.
-            path: Path to the current folder in Replit file hierarchy.
         """
 
         # Exit if the folder has already been processed (avoid double downloading a folder).
@@ -299,11 +308,11 @@ class ScraperScreen:
         time.sleep(3)   # Wait for the page to load.
 
         # Download repls inside the current folder.
-        self.status_scrolledtext.insert(tk.END, 'Currently downloading folder: '+path+'\n')
+        self.print_status('Currently downloading folder: '+path)
         self.download_repls_in_folder(driver, username, path)
 
         # Extract links to subfolders.
-        self.status_scrolledtext.insert(tk.END, 'Extracting subfolders...\n')
+        self.print_status('Extracting subfolders...')
         subfolder_links = [a.get_attribute('href') for a in driver.find_elements(By.XPATH, f'//a[contains(@href, "/@{username}?path=folder")]')]
 
         # Recursively download repls inside subfolders.
@@ -318,7 +327,9 @@ class ScraperScreen:
 
 
     def download_repls_in_folder(self, driver, username, path):
-        """Downloads all repls in the folder of the currently opened tab of the driver."""
+        """
+        Downloads all repls in the folder of the currently opened tab of the driver.
+        """
 
         # Extract links to repls inside the current folder
         anchor_attributes = driver.find_elements(By.XPATH, f'//a[contains(@href, "/@{username}/") and not(contains(@href, "?path="))]')
@@ -326,12 +337,11 @@ class ScraperScreen:
         last_modified = [a.find_elements(By.XPATH, './div[1]/div[2]/div[1]/span[1]')[0].text for a in anchor_attributes]
         size = [a.find_elements(By.XPATH, './div[1]/div[2]/div[1]/span[2]')[0].text for a in anchor_attributes]
         
-
         # Download repls from all links.
         old_handles = driver.window_handles # stored to track when download tabs close.
         n_repls = len(repl_links)
         for i, link in enumerate(repl_links):
-            file_name = link.split("/")[-1]
+            file_name = link.split('/')[-1]
             self.projects[file_name] = {
                 'path': path, 
                 'link': link, 
@@ -339,27 +349,32 @@ class ScraperScreen:
                 'size': size[i]
                 }
             download_url = f'{self.remove_query_params(link)}.zip'
-            self.status_scrolledtext.insert(tk.END, f'\t({i+1}/{n_repls}) Downloading project "{file_name}"...\n')
+            self.print_status(f'({i+1}/{n_repls}) Downloading project "{file_name}"...', indent=1)
             driver.execute_script(f'window.open("{download_url}", "_blank");')
 
         # Wait for download tabs to close.
-        timeout = 10
         start_time = time.time()
-        while time.time() - start_time < timeout:
-            if len(driver.window_handles) == len(old_handles):
-                return
-
-        raise TimeoutError('Timed out waiting for download tabs to close.')
+        last_update_time = start_time
+        while len(driver.window_handles) != len(old_handles):
+            # Give an update on elapsed time every 5 seconds.
+            if time.time() - last_update_time > 5:
+                self.print_status(f'Waiting for tabs to clear - {round(time.time() - start_time)} seconds elapsed...', indent=2)
+                last_update_time = time.time()
 
 
     def remove_query_params(self, url):
-        """Remove query parameters from a URL."""
+        """
+        Remove query parameters from a URL.
+        """
+
         parts = urlparse(url)
         return urlunparse(parts._replace(query=''))
 
 
     def open_tab(self, driver, link):
-        """Opens a tab, waits for it to open, and returns its handle."""
+        """
+        Opens a tab, waits for it to open, and returns its handle.
+        """
 
         # Store old handles (compared to new handles).
         old_handles = driver.window_handles
@@ -379,29 +394,32 @@ class ScraperScreen:
 
 
     def organize_files(self, output_folder):
-        """Unzips and organizes the downloaded files into folders based on the file hierarchy."""
+        """
+        Unzips and organizes the downloaded files into folders based on the file hierarchy.
+        """
 
         for project_name, project_data in self.projects.items():
             # Determine absolute paths of source file and destination folder.
             project_location = project_data['path']
-            source_file = os.path.join(output_folder, f"{project_name}.zip")
+            source_file = os.path.join(output_folder, f'{project_name}.zip')
             destination_folder = os.path.join(output_folder, project_location, project_name)
 
             # Update GUI and automatically scroll to prevent freezing during unzipping process.
-            self.status_scrolledtext.insert(tk.END, f'Unzipping {project_name}...\n')
+            self.print_status(f'Unzipping {project_name}...')
             self.root.update()
-            self.status_scrolledtext.see(tk.END)
 
+            # Unzip the file, move it to the proper directory, and delete the zip file.
             self.unzip_and_delete(source_file, destination_folder)
 
         # Deletes all configuration files automatically generated by Replit.
-        self.status_scrolledtext.insert(tk.END, 'Deleting ignored files and directories...\n')
-        self.status_scrolledtext.see(tk.END)
+        self.print_status('Deleting ignored files and directories...')
         self.delete_ignored_files()
 
 
     def unzip_and_delete(self, zip_file_path, extract_to_path):
-        """Unzips target zip file to designated path. Deletes zip file once complete."""
+        """
+        Unzips target zip file to designated path. Deletes zip file once complete.
+        """
 
         try:
             # Open the zip file.
@@ -414,11 +432,13 @@ class ScraperScreen:
             
         except Exception as e:
             # Print any exceptions that occur.
-            print(f"Error: {e}")
+            print(f'Error: {e}')
 
 
     def delete_ignored_files(self):
-        """Deletes files and directories listed in replit_ignore.txt"""
+        """
+        Deletes files and directories listed in replit_ignore.txt.
+        """
 
         for root, dirs, files in os.walk('output/'):
             # Remove ignored files.
@@ -441,7 +461,9 @@ class ScraperScreen:
 
 
     def toggle_status_updates(self):
-        """Toggles visibility of the status updates scrolledtext"""
+        """
+        Toggles visibility of the status updates scrolledtext.
+        """
 
         if self.status_checkbox.instate(['selected']):
             self.status_scrolledtext.pack()
@@ -478,4 +500,26 @@ class ScraperScreen:
 
         # Show a message box to indicate the download is complete.
         messagebox.showinfo('Download complete', 'The download is complete. Please check the output folder for the downloaded files.')
+
+
+    def print_status(self, text, indent=0):
+        """
+        Prints text to the status scrolledtext, with indent if specified.
+        """
+        
+        # Form the output string.
+        output = ''
+        output += '\t'*indent
+        output += text
+        output += '\n'
+
+        # Activate the scrolledtext to allow writing.
+        self.status_scrolledtext.configure(state='normal')
+
+        # Print the output string to the status scrolledtext.
+        self.status_scrolledtext.insert(tk.END, output)
+        self.status_scrolledtext.see(tk.END)
+
+        # Deactivate the scrolledtext to prevent editing by user.
+        self.status_scrolledtext.configure(state='disabled')
 
