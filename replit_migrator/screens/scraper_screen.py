@@ -109,9 +109,8 @@ class ScraperScreen(Screen):
         self.status_checkbox = ttk.Checkbutton(self.frame, text='Show status updates', command=self.toggle_status_updates, state='selected')
         self.status_checkbox.state(['selected'])
         self.status_checkbox.pack(pady=(30, 0))
-        self.status_scrolledtext = scrolledtext.ScrolledText(self.frame, height=10, width=80)
+        self.status_scrolledtext = scrolledtext.ScrolledText(self.frame, height=10, width=80, font=('Microsoft Sans Serif', 9), wrap=tk.WORD, state='disabled')
         self.print_status('Status updates will appear here once migration has begun.')
-        self.status_scrolledtext.configure(state='disabled')
         self.status_scrolledtext.pack()
 
 

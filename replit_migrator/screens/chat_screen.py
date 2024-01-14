@@ -35,11 +35,10 @@ class ChatScreen(Screen):
         self.title_label.pack()
 
         # Create chatbox which displays message history.
-        self.chatbox = scrolledtext.ScrolledText(self.frame, width=60, height=15, wrap=tk.WORD)
+        self.chatbox = scrolledtext.ScrolledText(self.frame, width=60, height=15, font=('Microsoft Sans Serif', 10), wrap=tk.WORD, state='disabled')
         for message in self.chat_history:
             self.display_message(message['role'], message['content'])
         self.chatbox.pack(padx=10, pady=10)
-        self.chatbox.configure(state='disabled')
 
         # Create input widgets to send messages.
         self.input_frame = ttk.Frame(self.frame)
@@ -85,9 +84,9 @@ class ChatScreen(Screen):
 
         self.chatbox.configure(state='normal')
         if role == 'user':
-            self.chatbox.insert(tk.END, 'You: ' + message + '\n')
+            self.chatbox.insert(tk.END, 'You: ' + message + '\n\n')
         elif role == 'assistant':
-            self.chatbox.insert(tk.END, 'ChatGPT: ' + message + '\n')
+            self.chatbox.insert(tk.END, 'ChatGPT: ' + message + '\n\n')
         self.chatbox.see(tk.END)
         self.chatbox.configure(state='disabled')
 

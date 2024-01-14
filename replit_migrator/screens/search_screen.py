@@ -83,7 +83,7 @@ class SearchScreen(Screen):
         self.search_button.grid(row=3, column=0, pady=(10, 20))
 
         # Create textbox to display search results.
-        self.result_text = scrolledtext.ScrolledText(self.frame, width=80, height=15)
+        self.result_text = scrolledtext.ScrolledText(self.frame, width=80, height=15, font=('Microsoft Sans Serif', 10), wrap=tk.WORD, state='disabled')
         self.result_text.grid(row=4, column=0)
 
         # Make screen expand to fill empty space horizontally.
@@ -205,7 +205,9 @@ class SearchScreen(Screen):
         output += '\n'
 
         # Insert output into textbox.
+        self.result_text.configure(state='normal')
         self.result_text.insert(tk.END, output)
+        self.result_text.configure(state='disabled')
 
     
     def search_files_by_name(self):
@@ -268,7 +270,11 @@ class SearchScreen(Screen):
             result += f'Line: {line_number}\n'
             result += f'Preview: {line_preview}\n'
         result += '\n'
+
+        # Insert output into textbox.
+        self.result_text.configure(state='normal')
         self.result_text.insert(tk.END, result)
+        self.result_text.configure(state='disabled')
 
 
     def string_to_date(self, raw_date):
