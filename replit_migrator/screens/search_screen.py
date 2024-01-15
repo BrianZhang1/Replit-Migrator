@@ -155,7 +155,7 @@ class SearchScreen(Screen):
         """
 
         # Clear previous results
-        self.result_text.delete(1.0, tk.END)
+        self.clear_results()
 
         # Get the search string.
         target_name = self.search_entry.get()
@@ -172,7 +172,7 @@ class SearchScreen(Screen):
         """
 
         # Clear previous results
-        self.result_text.delete(1.0, tk.END)
+        self.clear_results()
         
         # Get the start and end dates.
         start_date = self.start_date_calendar.get_date()
@@ -216,7 +216,7 @@ class SearchScreen(Screen):
         """
 
         # Clear previous results
-        self.result_text.delete(1.0, tk.END)
+        self.clear_results()
 
         # Search through the files in the output directory for the search_string.
         search_string = self.search_entry.get()
@@ -233,7 +233,7 @@ class SearchScreen(Screen):
         """
 
         # Clear previous results
-        self.result_text.delete(1.0, tk.END)
+        self.clear_results()
 
         # Search through the files in the output directory for the search_string.
         search_string = self.search_entry.get()
@@ -277,6 +277,16 @@ class SearchScreen(Screen):
         self.result_text.configure(state='disabled')
 
 
+    def clear_results(self):
+        """
+        Clears the contents of the results textbox.
+        """
+
+        self.result_text.configure(state='normal')
+        self.result_text.delete(1.0, tk.END)
+        self.result_text.configure(state='disabled')
+
+
     def string_to_date(self, raw_date):
         """
         Converts a layman representation of a date (ex. '4 weeks ago') to a datetime object.
@@ -292,15 +302,18 @@ class SearchScreen(Screen):
         bits = raw_date.split()
         magnitude = int(bits[0])
         actual_date = None
-        if bits[1] == 'days':
+        if 'day' in bits[1]:
             actual_date = cur_date - datetime.timedelta(days=magnitude)
-        elif bits[1] == 'weeks':
+        elif 'week' in bits[1]:
             actual_date = cur_date - datetime.timedelta(weeks=magnitude)
-        elif bits[1] == 'months':
+        elif 'month' in bits[1]:
             # Assume a month is 30 days.
             actual_date = cur_date - datetime.timedelta(days=magnitude*30)
-        elif bits[1] == 'years':
+        elif 'year' in bits[1]:
             actual_date = cur_date - datetime.timedelta(days=magnitude*365)
+        elif 'minute' in bits[1] or 'second' in bits[1] or 'hour' in bits[1]:
+            # File modified today.
+            actual_date = cur_date
 
         return actual_date
     
