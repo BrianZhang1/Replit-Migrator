@@ -1,12 +1,17 @@
 # About
 
-Replit Migrator is a tool to autonomously download all Repls from the online code collaboration platform Repl.it.  
+Replit Migrator is a tool to autonomously download all Repls from the online code collaboration platform Repl.it.
 
-This app was created to be my ICS4U (Grade 12 Computer Science) final project.
-
-Web scraping is technically against Repl.it's TOS, so I'll probably private this repository or at least hide the scraping code once it has been evaluated.
+A Python, Selenium web scraping tool for Repl.it with a variety of supplementary features including report generation, a ChatGPT-based chatbot, and a user management system integrated into a database server.
 
 Also see the repository for the database server [here](https://github.com/BrianZhang1/Replit-Migrator-Server).
+
+This app was created to be my ICS4U (Grade 12 Computer Science) final project.
+Alongside submitting this, I also submitted a
+[report](https://docs.google.com/document/d/1UDt7XE0PCX-tk8i2BnViOtbdCEhZ1iYob6xSYJinW60/edit?usp=sharing)
+analyzing this project.
+
+Note: web scraping is technically against Repl.it's TOS, so I'll probably private this repository or at least hide the scraping code once it has been evaluated.
 
 
 # How to Use
