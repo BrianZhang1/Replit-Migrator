@@ -74,6 +74,9 @@ class AppHandler:
         if screen == 'home':
             self.screen = HomeScreen(self.root, self.change_screen, self.data_handler)
         elif screen == 'scraper':
+            self.screen = ScraperScreen(self.root, self.change_screen, self.data_handler)
+        elif screen == 'scraper_from_existing':
+            # Same as scraper screen, but with a pre-selected project ID from download_existing screen.
             self.screen = ScraperScreen(self.root, self.change_screen, self.data_handler, self.selected_project_id)
         elif screen == 'download_existing':
             self.screen = DownloadExistingScreen(self.root, self.change_screen, self.data_handler, self.select_project)
@@ -97,8 +100,12 @@ class AppHandler:
     def select_project(self, project_id):
         """
         Selects a project to scrape.
+
+        This function is passed to the DownloadExistingScreen object, which calls it when the user
+        selects a project to scrape. The selected project ID is then passed to the ScraperScreen object
+        for direct, express scraping from a pre-existing Repl.it scan.
         """
 
         self.selected_project_id = project_id
-        self.change_screen('scraper')
+        self.change_screen('scraper_from_existing')
 

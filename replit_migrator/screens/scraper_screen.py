@@ -27,7 +27,7 @@ class ScraperScreen(Screen):
     """
 
 
-    def __init__(self, root, change_screen, data_handler, selected_project_id):
+    def __init__(self, root, change_screen, data_handler, selected_project_id=None):
         # Call superclass constructor to initalize core functionality.
         super().__init__(root, change_screen, data_handler)
 
