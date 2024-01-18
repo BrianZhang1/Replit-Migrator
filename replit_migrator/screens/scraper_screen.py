@@ -273,7 +273,7 @@ class ScraperScreen(Screen):
         """
 
         # Setup Selenium WebDriver
-        chrome_driver_path = os.environ.get(r'C:\Users\brian\AppData\Local\chromedriver-win64\chromedriver.exe')
+        chrome_driver_path = r'replit_migrator\chromedriver.exe'
 
         # Configure ChromeOptions to set the download directory.
         chrome_options = Options()
