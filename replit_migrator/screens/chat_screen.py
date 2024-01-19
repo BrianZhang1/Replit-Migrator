@@ -2,7 +2,8 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter import scrolledtext
-from openai import OpenAI
+import requests
+import json
 
 from .screen_superclass import Screen
 
@@ -12,11 +13,11 @@ class ChatScreen(Screen):
     """
 
 
-    def __init__(self, root, change_screen, data_handler):
+    def __init__(self, root, change_screen, data_handler, API_ROOT_URL):
         # Call superclass constructor to initalize core functionality.
         super().__init__(root, change_screen, data_handler)
 
-        self.client = OpenAI()
+        self.API_ROOT_URL = API_ROOT_URL
         self.chat_history = self.data_handler.read_chat_history()
 
         self.create_gui()
@@ -93,28 +94,13 @@ class ChatScreen(Screen):
 
     def get_openai_response(self):
         """
-        Sends a message with prompt to the OpenAI API and returns the response.
+        Send a message to server to get a response from OpenAI API.
         """
 
-        system_prompt = '''
-            You are an assistant that answers user's questions related to the Replit Migrator app.
-            The features include:
-                - downloading all Replit files from the web through Selenium
-                - direct express if user has already gone through the download process
-                - generating reports based on project and file data
-                - the option to interact with an AI chatbot (you)
-                - searching for projects and files by name, date, or content
-                - backup their migration data to the cloud
-            To access report, search, and express download, the user must have already downloaded
-            their Replit files.
-            Politely refuse to answer questions that are not related to the app.
-            '''
-        response = self.client.chat.completions.create(
-            model='gpt-3.5-turbo', 
-            messages=[{'role': 'system', 'content': system_prompt}] + self.chat_history
-        )
-
-        return response.choices[0].message.content
+        chat_history_json = json.dumps(self.chat_history)
+        response = requests.post(f'{self.API_ROOT_URL}chat/', data={'chat_history': chat_history_json})
+        response_json = json.loads(response.text)
+        return response_json['chat_response']
 
 
     def clear_chat(self):

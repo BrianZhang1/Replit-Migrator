@@ -85,7 +85,7 @@ class AppHandler:
         elif screen == 'report':
             self.screen = ReportScreen(self.root, self.change_screen, self.data_handler)
         elif screen == 'chat':
-            self.screen = ChatScreen(self.root, self.change_screen, self.data_handler)
+            self.screen = ChatScreen(self.root, self.change_screen, self.data_handler, self.API_ROOT_URL)
         elif screen == 'login':
             self.screen = LoginScreen(self.root, self.change_screen, self.data_handler, self.API_ROOT_URL)
         else:
